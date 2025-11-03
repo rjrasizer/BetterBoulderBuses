@@ -12,7 +12,6 @@ Our application includes a sign-in that allows users to mark if they are student
 Riley Rasizer  
 Arman Mokhlesi  
 Kian Feiz  
-Julia Williamson  
 Reed Shisler
 
 ---
