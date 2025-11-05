@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS users (
+    username VARCHAR (100) PRIMARY KEY,
+    password VARCHAR (60) NOT NULL
+)
