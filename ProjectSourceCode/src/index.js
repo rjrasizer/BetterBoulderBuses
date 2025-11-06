@@ -142,7 +142,6 @@ app.post('/register', async (req, res) => {
 
     console.log(`User: ${username} registered`);
     res.status(200).json({ message: 'Success' });
-    res.redirect("/login");
   } catch (error) {
     console.error("Error registering user:", error);
     res.status(400).json({ message: 'Invalid input' });
