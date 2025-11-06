@@ -154,6 +154,9 @@ const auth = (req, res, next) => {
   next();
 };
 
+app.get('/welcome', (req, res) => {
+  res.json({status: 'success', message: 'Welcome!'});
+});
 
 // Authentication Required
 app.use(auth);
@@ -176,4 +179,4 @@ app.get('/logout', (req, res) => {
   });
 });
 
-app.listen(3000, () => console.log('Server running on port 3000'));
+module.exports = app.listen(3000, () => console.log('Server running on port 3000'));
