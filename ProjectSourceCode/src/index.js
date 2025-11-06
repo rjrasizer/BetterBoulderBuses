@@ -1,5 +1,5 @@
-//Allow for relative path usage
-app.use(express.static(__dirname + '/'));
+// //Allow for relative path usage
+// app.use(express.static(__dirname + '/'));
 
 // *****************************************************
 // <!-- Section 1 : Import Dependencies -->
@@ -22,11 +22,6 @@ const axios = require('axios'); // To make HTTP requests from our server. We'll 
 // *****************************************************
 
 // create `ExpressHandlebars` instance and configure the layouts and partials dir.
-const hbs = handlebars.create({
-  extname: 'hbs',
-  layoutsDir: path.join(__dirname + 'views', 'layouts'),
-  partialsDir: path.join(__dirname + 'views', 'partials'),
-});
 
 // database configuration
 const dbConfig = {
@@ -54,10 +49,20 @@ db.connect()
 // *****************************************************
 
 // Register `hbs` as our view engine using its bound `engine()` function.
-app.engine('hbs', hbs.engine);
+app.engine('hbs', 
+    handlebars.engine({
+        extname: 'hbs',
+        layoutsDir: path.join(__dirname, 'views', 'layouts'),
+        partialsDir: path.join(__dirname, 'views', 'partials'),
+        defaultLayout: 'main',
+    })
+);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
+
 app.use(bodyParser.json()); // specify the usage of JSON for parsing request body.
+app.use(bodyParser.urlencoded({ extended: true }));
+
 app.use(express.static(path.join(__dirname, 'resources')));
 
 // initialize session variables
@@ -69,11 +74,106 @@ app.use(
   })
 );
 
-app.use(
-  bodyParser.urlencoded({
-    extended: true,
-  })
-);
+// *****************************************************
+// <!-- Section 4 : API Routes -->
+// *****************************************************
 
-app.use(express.static('public'));
+app.get('/', (req, res) => {
+  res.redirect('/login');
+});
+
+// -------- LOGIN ----------
+app.get('/login', (req, res) => {
+  res.render('pages/login')
+});
+
+app.post('/login', async (req, res) => {
+  try {
+    const user = await db.oneOrNone(
+      "SELECT * FROM users WHERE username = $1",
+      [req.body.username]
+    );
+
+    if (!user) {
+      return res.redirect('/register');
+    }
+
+    // check if password from request matches with password in DB
+    const match = await bcrypt.compare(req.body.password, user.password);
+
+    if (!match) {
+      return res.render('pages/login', {
+        message: "Incorrect username or password",
+        error: true
+      });
+    }
+    
+    req.session.user = user;
+    req.session.save();
+    res.redirect('/home');
+  } catch (error) {
+    console.error('Login error:', error);
+    res.render('pages/login', {
+      message: "An error occurred while trying to login.",
+      error: true
+    });
+  }
+});
+
+// --------- Register -----------
+app.get('/register', (req, res) => {
+  res.render('pages/register')
+});
+
+app.post('/register', async (req, res) => {
+  try {
+
+    const hash = await bcrypt.hash(req.body.password, 10);
+    await db.none(
+      'INSERT INTO users (username, password) VALUES ($1, $2)',
+      [req.body.username, hash]
+    );
+
+    console.log(`User: ${req.body.username} registered`);
+    res.redirect("/login");
+  } catch (error) {
+    console.error("Error registering user:", error);
+    res.render("pages/register", {
+      message: 'Registration failed. Username may already exist.',
+      error: true,
+    });
+  }
+});
+
+// ------------ Authentication Middleware ----------
+const auth = (req, res, next) => {
+  if (!req.session.user) {
+    // Default to login page.
+    return res.redirect('/login');
+  }
+  next();
+};
+
+
+// Authentication Required
+app.use(auth);
+
+// ------- Home route ---------
+app.get('/home', (req, res) => {
+  res.render('pages/home', {
+    title: 'Better Boulder Buses Home',
+  });
+});
+
+app.get('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error(err);
+      return res.render('pages/logout', { message: 'Error logging out. Please try again.' });
+    }
+
+    res.render('pages/logout', { message: 'Logged out successfully' });
+  });
+});
+
 app.listen(3000, () => console.log('Server running on port 3000'));
