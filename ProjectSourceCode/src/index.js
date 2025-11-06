@@ -128,20 +128,24 @@ app.get('/register', (req, res) => {
 app.post('/register', async (req, res) => {
   try {
 
-    const hash = await bcrypt.hash(req.body.password, 10);
+    const { username, password } = req.body;
+
+    if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ message: 'Invalid input' });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
     await db.none(
       'INSERT INTO users (username, password) VALUES ($1, $2)',
-      [req.body.username, hash]
+      [username, hash]
     );
 
-    console.log(`User: ${req.body.username} registered`);
+    console.log(`User: ${username} registered`);
+    res.status(200).json({ message: 'Success' });
     res.redirect("/login");
   } catch (error) {
     console.error("Error registering user:", error);
-    res.render("pages/register", {
-      message: 'Registration failed. Username may already exist.',
-      error: true,
-    });
+    res.status(400).json({ message: 'Invalid input' });
   }
 });
 
