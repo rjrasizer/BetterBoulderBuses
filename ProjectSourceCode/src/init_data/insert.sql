@@ -1,2 +1,2 @@
-INSERT INTO users (username, password)
-VALUES ('testuser', '$2a$12$..nvRheCP62sgUz.2JV9Eevof2Cdy74yEZwl5jbeJBlmFAR6uKOkm');
+-- INSERT INTO users (username, password)
+-- VALUES ('testuser', '$2a$12$..nvRheCP62sgUz.2JV9Eevof2Cdy74yEZwl5jbeJBlmFAR6uKOkm');
