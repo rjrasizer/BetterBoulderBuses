@@ -55,7 +55,6 @@ it('Negative : /add_user. Checking invalid name', done => {
         expect(res.body.message).to.equals('Invalid input');
         done();
       });
-  });
 });
 
 describe('Testing Redirect', () => {
