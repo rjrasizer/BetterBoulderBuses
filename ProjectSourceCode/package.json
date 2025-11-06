@@ -23,7 +23,8 @@
     "scripts": {
         "prestart": "npm install",
         "start": "node src/index.js",
-        "dev": "nodemon src/index.js"
-        
+        "dev": "nodemon src/index.js",
+        "test": "mocha",
+        "testandrun": "npm run prestart && npm run test && npm start"
     }
 }
