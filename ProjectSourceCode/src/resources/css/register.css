@@ -1,0 +1,84 @@
+body {
+  background-color: #fff;
+  color: #212529;
+  font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.register-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 4rem 1.25rem 3rem;
+}
+
+.register-card {
+  width: 100%;
+  max-width: 420px;
+  background-color: transparent;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 2.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.form-control {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  border-radius: 0.5rem;
+  padding: 0.85rem 1rem;
+  text-align: center;
+}
+
+.form-control:focus {
+  border-color: #000;
+  box-shadow: none;
+}
+
+.register-submit {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  padding: 0.9rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #000;
+  background-color: #000;
+  color: #fff;
+  font-weight: 600;
+  transition: opacity 0.2s ease;
+}
+
+.register-submit:hover,
+.register-submit:focus {
+  opacity: 0.8;
+}
+
+.register-card p {
+  margin: 0;
+}
+
+.register-card a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.register-card a:hover,
+.register-card a:focus {
+  text-decoration: none;
+}
+
+@media (max-width: 480px) {
+  .register-card {
+    padding: 2rem 0;
+  }
+}

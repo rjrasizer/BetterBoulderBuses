@@ -1,43 +1,50 @@
 {{> header}}
 
-<main class="container mt-5">
-    <h1 class="mb-4 text-center">Register</h1>
+<main class="register-page">
+  <section class="register-card">
+    <h1 class="text-center">Register</h1>
 
-    <form action="/register" method="POST" class="w-50 mx-auto">
-        <div class="mb-3">
-            <input
-                type="text"
-                class="form-control"
-                id="username"
-                name="username"
-                placeholder="Username"
-                required
-            />
-        </div>
-        <div class="mb-3">
-            <input
-                type="password"
-                class="form-control"
-                id="password"
-                name="password"
-                placeholder="Password"
-                required
-            />
-        </div>
-        <div class="mb-3">
-            <input
-                type="password"
-                class="form-control"
-                id="confirmPassword"
-                name="confirmPassword"
-                placeholder="Confirm Password"
-                required
-            />
-        </div>
+    <form action="/register" method="POST" class="register-form">
+      <div class="mb-3">
+        <input
+          type="text"
+          class="form-control"
+          id="username"
+          name="username"
+          placeholder="Username"
+          required
+        />
+      </div>
 
-        <button type="submit" class="btn btn-primary w-100">Register</button>
+      <div class="mb-3">
+        <input
+          type="password"
+          class="form-control"
+          id="password"
+          name="password"
+          placeholder="Password"
+          required
+        />
+      </div>
+
+      <div class="mb-4">
+        <input
+          type="password"
+          class="form-control"
+          id="confirmPassword"
+          name="confirmPassword"
+          placeholder="Confirm Password"
+          required
+        />
+      </div>
+
+      <button type="submit" class="register-submit">Register</button>
     </form>
-    <p class="text-center">Already have an account? <a href="/login">Login</a></p>
+
+    <p class="text-center">
+      Already have an account? <a href="/login">Login</a>
+    </p>
+  </section>
 </main>
 
 {{> footer}}
