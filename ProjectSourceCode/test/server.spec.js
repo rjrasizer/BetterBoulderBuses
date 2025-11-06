@@ -45,14 +45,16 @@ describe('Testing Add User API', () => {
   });
 });
 
-it('Negative : /add_user. Checking invalid name', done => {
-    chai
-      .request(server)
-      .post('/add_user')
-      .send({id: '5', name: 10, dob: '2020-02-20'})
+it('Negative : fail to register with invalid input', done => {
+    chai.request(server)
+      .post('/register')
+      .send({
+        username: '', 
+        password: 123
+      })
       .end((err, res) => {
         expect(res).to.have.status(400);
-        expect(res.body.message).to.equals('Invalid input');
+        expect(res.body).to.have.property('message', 'Invalid input');
         done();
       });
 });
