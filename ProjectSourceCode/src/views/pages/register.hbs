@@ -4,7 +4,7 @@
   <section class="register-card">
     <h1 class="text-center">Register</h1>
 
-    <form action="/register" method="POST" class="register-form">
+    <form action="/register" method="POST" class="register-form" id="registerForm">
       <div class="mb-3">
         <input
           type="text"
@@ -38,13 +38,17 @@
         />
       </div>
 
-      <button type="submit" class="register-submit">Register</button>
+      <button type="submit" class="register-submit" id="registerSubmit" disabled>Register</button>
     </form>
+
+    <p class="text-center register-feedback" id="passwordFeedback"></p>
 
     <p class="text-center">
       Already have an account? <a href="/login">Login</a>
     </p>
   </section>
 </main>
+
+<script src="/js/register.js" defer></script>
 
 {{> footer}}

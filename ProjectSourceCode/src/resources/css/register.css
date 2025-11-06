@@ -67,6 +67,12 @@ body {
   margin: 0;
 }
 
+.register-feedback {
+  min-height: 1.25rem;
+  font-size: 0.9rem;
+  color: #d00;
+}
+
 .register-card a {
   color: inherit;
   text-decoration: underline;
