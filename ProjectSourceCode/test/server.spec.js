@@ -31,12 +31,12 @@ describe('Server!', () => {
 
 // ********************************************************************************
 
-describe('Testing Add User API', () => {
-  it('positive : /add_user', done => {
+describe('Testing Register API', () => {
+  it('positive : /register takes a new user and returns success', done => {
     chai
       .request(server)
-      .post('/add_user')
-      .send({id: 5, name: 'John Doe', dob: '2020-02-20'})
+      .post('/register')
+      .send({username: 'test_user1', password: 'testPassword1'})
       .end((err, res) => {
         expect(res).to.have.status(200);
         expect(res.body.message).to.equals('Success');
