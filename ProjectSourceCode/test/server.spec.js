@@ -86,3 +86,42 @@ describe('Testing Render', () => {
       });
   });
 });
+
+describe('Logout Route Tests', () => {
+  let agent;
+
+  beforeEach(() => {
+    // Create a session agent
+    agent = chai.request.agent(server);
+  });
+
+  it('positive: /logout should log out an authenticated user', async () => {
+    // Manually simulate login (bypass password + DB)
+    agent.app.request.session = {
+      user: { username: 'mockUser' }
+    };
+
+    const res = await agent.get('/logout');
+
+    expect(res).to.have.status(200);
+    expect(res).to.be.html;
+    expect(res.text).to.include('Logged out successfully');
+
+    agent.close();
+  });
+});
+
+
+describe('Logout Route Tests - Negative', () => {
+  it('negative: /logout should redirect to /login when not authenticated', done => {
+    chai
+      .request(server)
+      .get('/logout')
+      .end((err, res) => {
+        expect(res).to.have.status(302);
+        expect(res).to.redirect;
+        expect(res.header.location).to.equal('/login');
+        done();
+      });
+  });
+});
