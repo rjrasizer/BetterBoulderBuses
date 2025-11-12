@@ -1,0 +1,21 @@
+area_id,area_name
+ftcollins,Ft. Collins
+local_fare_zone,Local Fare Zone
+denver_bustang,Denver
+frisco,Fricso
+woodmen,Woodmen Park and Ride
+csprings,Colorado Springs
+idahospgs,Idaho Springs
+natl_park,Rocky Mountain National Park
+free_service,Free Service
+parachute,Parachute
+eagle,Eagle
+grandjct,Grand Junction
+monument,Monument Park and Ride
+airport_fare_zone,Airport
+ski_area,Ski Area
+glenwood,Glenwood Springs
+rifle,Rifle
+berthoud,Berthoud Mobility Hub
+centerraloveland,Centerra Loveland Mobility Hub
+firestonelongmont,Firestone-Longmont Mobility Hub
