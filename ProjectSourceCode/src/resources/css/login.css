@@ -1,0 +1,74 @@
+:root {
+    --cu-black: #000000;
+    --cu-gold: #CFB87C;
+    --cu-light-gold: #F2E9D8;
+    --cu-dark-gray: #565A5C;
+  }
+
+
+.login-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    padding: 2rem 1.25rem;
+    background: #fff;
+  }
+  
+  .login-card {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 0.75rem;
+    padding: 2.5rem 2rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.3rem;
+  }
+  
+  .form-control {
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+    border-radius: 0.5rem;
+    padding: 0.85rem 1rem;
+  }
+  
+  .form-control:focus {
+    border-color: var(--cu-gold);
+    box-shadow: 0 0 0 2px rgba(207,184,124,0.3);
+  }
+  
+  .login-submit {
+    width: 100%;
+    max-width: 320px;
+    padding: 0.9rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--cu-black);
+    background: var(--cu-black);
+    color: #fff;
+    font-weight: 600;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    display: block;
+    margin: 0 auto;
+  }
+  
+  .login-submit:hover {
+    background-color: var(--cu-gold);
+    border-color: var(--cu-gold);
+    color: var(--cu-black);
+  }
+  
+  .login-card a {
+    color: var(--cu-black);
+    text-decoration: underline;
+  }
+  
+  .login-card a:hover {
+    color: var(--cu-gold);
+  }
