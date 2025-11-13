@@ -55,6 +55,9 @@ app.engine('hbs',
         layoutsDir: path.join(__dirname, 'views', 'layouts'),
         partialsDir: path.join(__dirname, 'views', 'partials'),
         defaultLayout: 'main',
+        helpers: {
+          eq: (a, b) => a === b,
+        }
     })
 );
 app.set('view engine', 'hbs');
@@ -180,6 +183,19 @@ app.get('/home', auth, (req, res) => {
   });
 });
 
+app.get('/settings', auth, (req, res) => {
+  const activeTab = req.query.tab || "profile";
+
+  const userData = {
+    username: req.body.username,
+    name: "",
+    email: "",
+    avatar: "",
+  }
+
+  res.render('pages/settings', { userData, activeTab, title: "Settings" });
+});
+
 app.get('/logout', (req, res) => {
   if(!req.session.user) return res.redirect('/login');
   req.session.destroy(err => {
@@ -189,6 +205,7 @@ app.get('/logout', (req, res) => {
     res.render('pages/logout', { message: 'Logged out successfully' });
   });
 });
+
 
 module.exports = app.listen(3000, () => console.log('Server running on port 3000'));
 

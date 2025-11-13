@@ -1,37 +1,36 @@
-<aside class="w-64 bg-white shadow-lg">
-  <div class="p-4">
-    <div class="flex items-center space-x-4 mb-6">
-      <img src="{{userData.avatar}}" alt="Profile" class="h-12 w-12 rounded-full object-cover" onerror="this.src='/img/default-avatar.png'">
-      <div>
-        <h2 class="font-semibold text-gray-900">{{userData.name}}</h2>
-        <p class="text-sm text-gray-500">{{userData.email}}</p>
-      </div>
+<aside class="bg-white border-end" style="width: 250px;">
+    <div class="p-3 d-flex flex-column align-items-center">
+        <!-- Profile Info -->
+        <div class="text-center mb-4 w-100">
+            <img src="{{userData.avatar}}" onerror="this.src='/img/default-profile-photo.jpg'" alt="Profile"
+                class="rounded-circle img-fluid mb-2" style="width: 80px; height: 80px;">
+            <h5 class="mb-0">{{userData.name}}</h5>
+            <small class="text-muted">{{userData.email}}</small>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="nav flex-column w-100">
+            <a href="/settings?tab=profile" class="nav-link {{#if (eq activeTab 'profile')}}active{{/if}}">
+                <i class="fi fi-user me-2"></i> Profile
+            </a>
+            <a href="/settings?tab=notifications" class="nav-link {{#if (eq activeTab 'notifications')}}active{{/if}}">
+                <i class="fi fi-bell me-2"></i> Notifications
+            </a>
+            <a href="/settings?tab=security" class="nav-link {{#if (eq activeTab 'security')}}active{{/if}}">
+                <i class="fi fi-lock me-2"></i> Security
+            </a>
+            <a href="/settings?tab=preferences" class="nav-link {{#if (eq activeTab 'preferences')}}active{{/if}}">
+                <i class="fi fi-settings me-2"></i> Preferences
+            </a>
+            <a href="/settings?tab=help" class="nav-link {{#if (eq activeTab 'help')}}active{{/if}}">
+                <i class="fi fi-help-circle me-2"></i> Help
+            </a>
+
+            <a href="/logout"
+                class="flex items-center space-x-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">
+                <i class="fi fi-log-out h-5 w-5"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
     </div>
-    <nav class="space-y-1">
-      <a href="/settings?tab=profile" class="flex items-center space-x-3 w-full px-4 py-2 text-sm rounded-lg {{#if (eq activeTab 'profile')}}bg-blue-50 text-blue-600{{else}}text-gray-600 hover:bg-gray-50{{/if}}">
-        <i class="fi fi-user h-5 w-5"></i>
-        <span>Profile</span>
-      </a>
-      <a href="/settings?tab=notifications" class="flex items-center space-x-3 w-full px-4 py-2 text-sm rounded-lg {{#if (eq activeTab 'notifications')}}bg-blue-50 text-blue-600{{else}}text-gray-600 hover:bg-gray-50{{/if}}">
-        <i class="fi fi-bell h-5 w-5"></i>
-        <span>Notifications</span>
-      </a>
-      <a href="/settings?tab=security" class="flex items-center space-x-3 w-full px-4 py-2 text-sm rounded-lg {{#if (eq activeTab 'security')}}bg-blue-50 text-blue-600{{else}}text-gray-600 hover:bg-gray-50{{/if}}">
-        <i class="fi fi-lock h-5 w-5"></i>
-        <span>Security</span>
-      </a>
-      <a href="/settings?tab=preferences" class="flex items-center space-x-3 w-full px-4 py-2 text-sm rounded-lg {{#if (eq activeTab 'preferences')}}bg-blue-50 text-blue-600{{else}}text-gray-600 hover:bg-gray-50{{/if}}">
-        <i class="fi fi-settings h-5 w-5"></i>
-        <span>Preferences</span>
-      </a>
-      <a href="/settings?tab=help" class="flex items-center space-x-3 w-full px-4 py-2 text-sm rounded-lg {{#if (eq activeTab 'help')}}bg-blue-50 text-blue-600{{else}}text-gray-600 hover:bg-gray-50{{/if}}">
-        <i class="fi fi-help-circle h-5 w-5"></i>
-        <span>Help</span>
-      </a>
-      <button class="flex items-center space-x-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">
-        <i class="fi fi-log-out h-5 w-5"></i>
-        <span>Logout</span>
-      </button>
-    </nav>
-  </div>
 </aside>
