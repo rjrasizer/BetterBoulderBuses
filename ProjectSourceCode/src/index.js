@@ -78,6 +78,23 @@ app.use(
 // <!-- Section 4 : API Routes -->
 // *****************************************************
 
+// ------------ Authentication Middleware ----------
+const auth = (req, res, next) => {
+  if (!req.session.user) {
+    // Default to login page.
+    return res.redirect('/login');
+  }
+  next();
+};
+
+app.get('/welcome', (req, res) => {
+  res.json({status: 'success', message: 'Welcome!'});
+});
+
+// Authentication Required
+// app.use(auth);
+
+// ---------- Routes -----------
 app.get('/', (req, res) => {
   res.redirect('/login');
 });
@@ -141,43 +158,33 @@ app.post('/register', async (req, res) => {
     );
 
     console.log(`User: ${username} registered`);
-    res.status(200).json({ message: 'Success' });
+    //res.status(200).json({ message: 'Success' });
+    res.redirect('/login');
   } catch (error) {
     console.error("Error registering user:", error);
     res.status(400).json({ message: 'Invalid input' });
   }
 });
 
-// ------------ Authentication Middleware ----------
-const auth = (req, res, next) => {
-  if (!req.session.user) {
-    // Default to login page.
-    return res.redirect('/login');
-  }
-  next();
-};
-
-app.get('/welcome', (req, res) => {
-  res.json({status: 'success', message: 'Welcome!'});
+//Test route for redirect testing
+app.get('/test', (req, res) => {
+  if (!req.session.user) return res.redirect('/login');
+  res.send('Authenticated test page');
 });
 
-// Authentication Required
-app.use(auth);
-
-// ------- Home route ---------
-app.get('/home', (req, res) => {
+// ------- Home route ----------
+app.get('/home', auth, (req, res) => {
   res.render('pages/home', {
     title: 'Better Boulder Buses Home',
   });
 });
 
 app.get('/logout', (req, res) => {
+  if(!req.session.user) return res.redirect('/login');
   req.session.destroy(err => {
     if (err) {
-      console.error(err);
       return res.render('pages/logout', { message: 'Error logging out. Please try again.' });
     }
-
     res.render('pages/logout', { message: 'Logged out successfully' });
   });
 });
