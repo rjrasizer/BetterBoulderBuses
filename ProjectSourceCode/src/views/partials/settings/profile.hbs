@@ -1,21 +1,26 @@
 <div class="space-y-6">
-  <h1 class="text-2xl font-bold text-gray-900">Profile Settings</h1>
+    <h1 class="text-2xl font-bold text-gray-900">Profile Settings</h1>
 
-  <div class="flex items-center space-x-6">
-    <img src="{{userData.avatar}}" alt="Profile" class="h-24 w-24 rounded-full object-cover" onerror="this.src='/img/default-avatar.png'">
-    <button class="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Change Photo</button>
-  </div>
-
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-    <div>
-      <label class="block text-sm font-medium text-gray-700">Name</label>
-      <input type="text" value="{{userData.name}}" class="mt-1 block w-full px-4 py-3 rounded-lg border-2 border-gray-200 bg-gray-50">
+    <div class="flex items-center space-x-6">
+        <img src="{{#if userData.avatar}}{{userData.avatar}}{{else}} /img/default-profile-photo.jpg{{/if}}"
+            alt="Profile" class="h-24 w-24 rounded-full object-cover" />
+        <button class="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Change Photo</button>
     </div>
 
-    <div>
-      <label class="block text-sm font-medium text-gray-700">Email</label>
-      <input type="email" value="{{userData.email}}" class="mt-1 block w-full px-4 py-3 rounded-lg border-2 border-gray-200 bg-gray-50">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {{!-- Name --}}
+        <div class="space-y-2 group">
+            <label class="block text-sm font-medium text-gray-700">Name</label>
+            <input type="text" value="{{userData.name}}" placeholder="Enter your name"
+                class="mt-1 block w-full px-4 py-3 rounded-lg border-2 border-gray-200 bg-gray-50" />
+        </div>
+
+        {{!-- Email --}}
+        <div class="space-y-2 group">
+            <label class="block text-sm font-medium text-gray-700">Email</label>
+            <input type="email" value="{{userData.email}}" placeholder="Enter your email"
+                class="mt-1 block w-full px-4 py-3 rounded-lg border-2 border-gray-200 bg-gray-50" />
+        </div>
+        <!-- Repeat for the other fields (age, height, etc.) -->
     </div>
-    <!-- Repeat for the other fields (age, height, etc.) -->
-  </div>
 </div>
