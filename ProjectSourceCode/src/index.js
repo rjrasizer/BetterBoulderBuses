@@ -102,6 +102,82 @@ app.get('/', (req, res) => {
   res.redirect('/login');
 });
 
+// ========== API: Routes list ==========
+// Returns a list of routes with id and display names for sidebar use
+app.get('/api/routes', async (req, res) => {
+  try {
+    const rows = await db.any(`
+      SELECT route_id, route_short_name, route_long_name
+      FROM routes
+      ORDER BY 
+        CASE WHEN route_short_name ~ '^[0-9]+$' THEN route_short_name::int END NULLS LAST,
+        route_short_name,
+        route_long_name
+    `);
+    res.json(rows);
+  } catch (e) {
+    console.error('routes api error', e);
+    res.status(500).json({ error: 'Failed to load routes' });
+  }
+});
+
+// Available directions for a route (based on representative trips we computed)
+app.get('/api/routes/:route_id/directions', async (req, res) => {
+  try {
+    const rows = await db.any(
+      `SELECT direction_id
+       FROM route_representatives
+       WHERE route_id = $1
+       ORDER BY direction_id`,
+      [req.params.route_id]
+    );
+    return res.json(rows.map(r => r.direction_id));
+  } catch (e) {
+    console.error('directions api error', e);
+    return res.status(500).json({ error: 'Failed to load directions' });
+  }
+});
+
+// Route shape GeoJSON (precomputed FeatureCollection with a LineString)
+app.get('/api/routes/:route_id/shape', async (req, res) => {
+  const routeId = req.params.route_id;
+  const q = req.query.direction_id;
+  const directionId = Number.isFinite(Number(q)) ? Number(q) : 0;
+  try {
+    const row = await db.oneOrNone(
+      `SELECT geojson
+       FROM route_shapes_geojson
+       WHERE route_id = $1 AND direction_id = $2`,
+      [routeId, directionId]
+    );
+    if (!row) return res.status(404).json({ error: 'Shape not found for route/direction' });
+    return res.json(row.geojson);
+  } catch (e) {
+    console.error('shape api error', e);
+    return res.status(500).json({ error: 'Failed to load shape' });
+  }
+});
+
+// Ordered stops for a route/direction (from representative trip)
+app.get('/api/routes/:route_id/stops', async (req, res) => {
+  const routeId = req.params.route_id;
+  const q = req.query.direction_id;
+  const directionId = Number.isFinite(Number(q)) ? Number(q) : 0;
+  try {
+    const rows = await db.any(
+      `SELECT stop_id, stop_name, lon, lat, stop_sequence
+       FROM route_stops_ordered
+       WHERE route_id = $1 AND direction_id = $2
+       ORDER BY stop_sequence`,
+      [routeId, directionId]
+    );
+    return res.json(rows);
+  } catch (e) {
+    console.error('stops api error', e);
+    return res.status(500).json({ error: 'Failed to load stops' });
+  }
+});
+
 // -------- LOGIN ----------
 app.get('/login', (req, res) => {
   res.render('pages/login')
