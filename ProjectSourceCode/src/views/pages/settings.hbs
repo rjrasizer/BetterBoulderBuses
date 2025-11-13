@@ -1,28 +1,31 @@
+<div class="d-flex min-vh-100">
+    {{> settings/sidebar activeTab=activeTab userData=userData }}
 
-<div class="flex w-full">
-  {{> settings/sidebar activeTab=activeTab }}
-  
-  <main class="flex-1 p-8">
-    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-sm p-8">
-      {{#if (eq activeTab "profile")}}
-        {{> settings/profile userData=userData }}
-      {{/if}}
+    <main class="flex-grow-1 p-4 bg-light">
+        <div class="container py-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    {{#if (eq activeTab "profile")}}
+                    {{> settings/profile userData=userData }}
+                    {{/if}}
 
-      {{#if (eq activeTab "notifications")}}
-        {{> settings/notifications userData=userData }}
-      {{/if}}
+                    {{#if (eq activeTab "notifications")}}
+                    {{> settings/notifications userData=userData }}
+                    {{/if}}
 
-      {{#if (eq activeTab "security")}}
-        {{> settings/security }}
-      {{/if}}
+                    {{#if (eq activeTab "security")}}
+                    {{> settings/security }}
+                    {{/if}}
 
-      {{#if (eq activeTab "preferences")}}
-        {{> settings/preferences userData=userData }}
-      {{/if}}
+                    {{#if (eq activeTab "preferences")}}
+                    {{> settings/preferences userData=userData }}
+                    {{/if}}
 
-      {{#if (eq activeTab "help")}}
-        {{> settings/help }}
-      {{/if}}
-    </div>
-  </main>
+                    {{#if (eq activeTab "help")}}
+                    {{> settings/help }}
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </main>
 </div>
