@@ -1,15 +1,43 @@
-<h2> Better Boulder Buses Login </h2>
-<form action="/login" method = "POST">
-    <label for = "username"> Username </label>
-    <input type = "text" name = "username" id = "username" />
+{{> header}}
 
-    <label for = "password"> Password </label>
-    <input type = "password" name = "password" id = "password" />
+<link rel="stylesheet" href="/css/login.css">
 
-    <input type = "submit" value = "login!" />
+<main class="login-page">
+  <section class="login-card">
+    <h1 class="text-center">Login</h1>
 
-</form>
+    <form action="/login" method="POST" class="login-form">
 
-<a href = "/register"> Don't have an account? Register! </a>
+      <div class="mb-3">
+        <input
+          type="text"
+          class="form-control"
+          id="username"
+          name="username"
+          placeholder="Username"
+          required
+        />
+      </div>
 
-{{!-- {{>message}} --}}
+      <div class="mb-4">
+        <input
+          type="password"
+          class="form-control"
+          id="password"
+          name="password"
+          placeholder="Password"
+          required
+        />
+      </div>
+
+      <button type="submit" class="login-submit">Login</button>
+
+    </form>
+
+    <p class="text-center">
+      Don't have an account? <a href="/register">Register</a>
+    </p>
+  </section>
+</main>
+
+{{> footer}}

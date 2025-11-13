@@ -1,3 +1,11 @@
+:root {
+  --cu-black: #000000;
+  --cu-gold: #CFB87C;
+  --cu-light-gold: #F2E9D8;
+  --cu-dark-gray: #565A5C;
+}
+
+
 body {
   background-color: #fff;
   color: #212529;
@@ -60,7 +68,9 @@ body {
 
 .register-submit:hover,
 .register-submit:focus {
-  opacity: 0.8;
+  background-color: #CFB87C; 
+  border-color: #CFB87C;
+  color: #000;               
 }
 
 .register-card p {
