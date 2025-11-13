@@ -179,6 +179,7 @@ app.get('/test', (req, res) => {
 app.get('/home', auth, (req, res) => {
   res.render('pages/home', {
     title: 'Better Boulder Buses Home',
+    mapboxToken: process.env.MAPBOX_ACCESS_TOKEN,
   });
 });
 
