@@ -1,0 +1,71 @@
+UAT TESTING PLAN
+
+Testers: 
+Kian, Arman, Riley, Reed run locally from github clone instance
+Peer reviewers on a deployed website
+
+
+
+Test 1: Valid user registration and account creation 
+ENVIORNMENT: 
+Localhost
+Server: Node.js
+Database: PostgreSQL local instance 
+
+Test that a user is directed accordingly and shown a proper account creation message
+
+A user must fulfil the regex requirements for email and password when using the register page
+A valid email, some string of letters followed by an @ symbol, and a domain must be provided
+A valid password must be provided that fulfills the requirements listed
+
+Input:
+feizjkian@gmail.com
+Password: ThisIsATest23
+Expected Result:
+The server navigates the user to the home page
+The server tells the user that an account was successfully created
+The server stores the new user data in the users database 
+
+Test 2: Invalid user registration with bad input
+ENVIORNMENT: 
+Localhost
+Server: Node.js
+Database: PostgreSQL local instance 
+Test that users put in correctly formatted data that can be inserted into the USERS table
+
+A user fails to submit one of the dedicated forms:
+Email
+Password
+
+INPUT:
+Input:
+Email: ThisIsATest
+Password: hi (under character limit)
+
+Expected Result:
+No data is inserted into the users table
+User receives an error message that correctly reflects the failed input
+User is not directed or removed from the register page
+
+Test 3: Valid route storage within a users account
+ENVIORNMENT: 
+Localhost
+Server: Node.js
+Database: PostgreSQL local instance Tests that a user inputted route they wish to take via the bus is possible and will be properly inserted into a routes table
+
+A user plots a route on the homepage from one location to another
+A user clicks a dedicated save button
+
+INPUT:
+Click on Boulder Campus
+Click on DIA
+
+
+Expected result:
+A user receives a valid route and is shown bus times for their respective journey
+A user's route is properly inserted into a routes table
+A user's route is kept even after logout
+A user's saved routes are properly shown on button click
+
+Data description: 
+Check that location data is stored, specifically 
