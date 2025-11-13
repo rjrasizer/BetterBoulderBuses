@@ -183,3 +183,15 @@ app.get('/logout', (req, res) => {
 });
 
 module.exports = app.listen(3000, () => console.log('Server running on port 3000'));
+
+//eq helper for settings page
+// import exphbs from "express-handlebars";
+
+// const hbs = exphbs.create({
+//   helpers: {
+//     eq: (a, b) => a === b,
+//   }
+// })
+
+// app.engine("hbs", hbs.engine);
+// app.set("view engine", "hbs");
