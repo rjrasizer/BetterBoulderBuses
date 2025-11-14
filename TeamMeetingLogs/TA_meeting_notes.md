@@ -30,3 +30,15 @@
 * A **working demo** must be ready by next week.
 * **Release Notes:** Add a task to the project board for one team member to create **Release Notes** on GitHub (patch notes) and place them in the milestone folder.
 * **Grading:** Review the Group evaluation rubric, which will be the basis for grading next week.
+
+---
+
+## Meeting 3 – November 13, 2025
+**Key Discussions & Decisions:**
+* **Functionality Goals:**
+    * Add in **live tracking** capability.
+    * Incorporate as many functions as possible from **Mapbox** to make the app fuller and stand out.
+* **Presentation Strategy:** When presenting, clearly articulate **why people would use this over Google Maps or the RTD website** (the specific value provided).
+
+**Action Items:**
+* **Release Notes:** Ensure Release Notes are completed and documented on GitHub.

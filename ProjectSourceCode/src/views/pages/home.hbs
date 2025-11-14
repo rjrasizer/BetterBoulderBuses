@@ -1,19 +1,27 @@
 <!-- Full-page Mapbox map for Better Boulder Buses -->
 <style>
   /* Hide the global footer on the map page to avoid overlaying the map */
-  footer { display: none; }
-  html, body {
+  footer {
+    display: none;
+  }
+
+  html,
+  body {
     height: 100%;
     margin: 0;
   }
+
   /* Ensure the map fills the visible page area */
   #map {
-    position: fixed; /* Fully cover the viewport regardless of page flow */
+    position: fixed;
+    /* Fully cover the viewport regardless of page flow */
     inset: 0;
     width: 100%;
     height: 100%;
-    background: #f5f5f5; /* fallback background before tiles load */
+    background: #f5f5f5;
+    /* fallback background before tiles load */
   }
+
   /* Optional: a small overlay to verify the page loaded */
   .overlay {
     position: absolute;
@@ -25,11 +33,20 @@
     padding: 6px 10px;
     font-size: 14px;
     color: #333;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
   }
-  .overlay .status-ok { color: #198754; }
-  .overlay .status-warn { color: #dc3545; }
-  .overlay .status-info { color: #0d6efd; }
+
+  .overlay .status-ok {
+    color: #198754;
+  }
+
+  .overlay .status-warn {
+    color: #dc3545;
+  }
+
+  .overlay .status-info {
+    color: #0d6efd;
+  }
 </style>
 
 <!-- Mapbox GL JS CSS is included in main layout head -->
@@ -37,7 +54,8 @@
 <div class="overlay">
   <strong>Better Boulder Buses</strong>
   <span> — Map status:
-    {{#if mapboxToken}}<span id="map-status" class="status-ok">token set</span>{{else}}<span id="map-status" class="status-warn">missing token</span>{{/if}}
+    {{#if mapboxToken}}<span id="map-status" class="status-ok">token set</span>{{else}}<span id="map-status"
+      class="status-warn">missing token</span>{{/if}}
   </span>
   {{#if title}}<div>{{title}}</div>{{/if}}
   <div style="font-size: 12px; color: #666;">/home</div>
@@ -54,8 +72,21 @@
 
 <div id="map" role="region" aria-label="Interactive transit map"></div>
 
+<!-- Add this inside your main layout (index.hbs) body, near the top -->
+<a href="/settings" 
+   class="position-fixed top-0 end-0 m-3 text-dark">
+  <i class="bi bi-gear-fill fs-3"></i>
+</a>
+
+<div class="sidebar">
+  <button class="sidebar-toggle"><i class="fa fa-plus icon"></i></button>
+</div>
+
 <!-- Mapbox GL JS script -->
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.16.1/mapbox-gl.js"></script>
+
+<!-- Sidebar Script -->
+<script src="js/script.js"></script>
 
 <script>
   (function () {
@@ -75,23 +106,23 @@
     }
 
     function loadScript(src) {
-      return new Promise(function(resolve, reject) {
+      return new Promise(function (resolve, reject) {
         var s = document.createElement('script');
         s.src = src;
         s.async = true;
         s.onload = resolve;
-        s.onerror = function(e){ reject(new Error('Failed to load ' + src)); };
+        s.onerror = function (e) { reject(new Error('Failed to load ' + src)); };
         document.head.appendChild(s);
       });
     }
 
     function loadCSS(href) {
-      return new Promise(function(resolve, reject) {
+      return new Promise(function (resolve, reject) {
         var l = document.createElement('link');
         l.rel = 'stylesheet';
         l.href = href;
         l.onload = resolve;
-        l.onerror = function(){ reject(new Error('Failed to load ' + href)); };
+        l.onerror = function () { reject(new Error('Failed to load ' + href)); };
         document.head.appendChild(l);
       });
     }
@@ -104,11 +135,11 @@
           loadCSS('https://unpkg.com/mapbox-gl@2.15.0/dist/mapbox-gl.css'),
           loadScript('https://unpkg.com/mapbox-gl@2.15.0/dist/mapbox-gl.js')
         ])
-          .then(function(){
+          .then(function () {
             if (typeof mapboxgl === 'undefined') throw new Error('mapboxgl still undefined after alternate CDN');
             return createMapboxMap();
           })
-          .catch(function(err){
+          .catch(function (err) {
             console.error(err);
             setStatus('Mapbox GL JS failed (blockers?). Falling back to MapLibre…', 'status-warn');
             return initMapLibre();
@@ -131,7 +162,7 @@
         zoom: 12
       });
       map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-      map.on('load', function(){
+      map.on('load', function () {
         setStatus('loaded', 'status-info');
 
         // Helpers shared by Mapbox GL + MapLibre
@@ -251,8 +282,8 @@
     function initMapLibre() {
       // Load MapLibre JS and CSS and render a demo style as a fallback
       return loadCSS('https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css')
-        .then(function(){ return loadScript('https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js'); })
-        .then(function(){
+        .then(function () { return loadScript('https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js'); })
+        .then(function () {
           if (typeof maplibregl === 'undefined') throw new Error('maplibregl undefined');
           var map = new maplibregl.Map({
             container: 'map',
@@ -261,7 +292,7 @@
             zoom: 12
           });
           map.addControl(new maplibregl.NavigationControl(), 'top-right');
-          map.on('load', function(){
+          map.on('load', function () {
             setStatus('fallback loaded (MapLibre)', 'status-info');
 
             // Use same API-driven flow as Mapbox path
@@ -363,7 +394,7 @@
           });
           map.on('error', function (e) { console.error('MapLibre error:', e); setStatus('MapLibre error: see console', 'status-warn'); });
         })
-        .catch(function(e){ console.error(e); setStatus('Fallback failed to load. See console.', 'status-warn'); });
+        .catch(function (e) { console.error(e); setStatus('Fallback failed to load. See console.', 'status-warn'); });
     }
 
     function start() {
