@@ -60,6 +60,14 @@
   {{#if title}}<div>{{title}}</div>{{/if}}
   <div style="font-size: 12px; color: #666;">/home</div>
   <div id="diag" style="font-size:12px;color:#666;max-width:320px;word-break:break-all"></div>
+  <!-- MVP: Simple routes list -->
+  <div id="routesPanel" style="margin-top:8px;max-height:220px;overflow:auto;border:1px solid #ddd;border-radius:6px;padding:6px;background:#fff;min-width:260px;">
+    <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+      <span>Routes</span>
+      <span id="routesCount" style="font-size:12px;color:#666;"></span>
+    </div>
+    <ul id="routeList" style="list-style:none;padding:0;margin:0;font-size:13px;line-height:1.4;"></ul>
+  </div>
 </div>
 
 <div id="map" role="region" aria-label="Interactive transit map"></div>
@@ -157,107 +165,113 @@
       map.on('load', function () {
         setStatus('loaded', 'status-info');
 
-        // Waypoints (lng,lat) the route should connect along streets
-        var waypoints = [
-          [-105.2760, 40.0190],
-          [-105.2730, 40.0145],
-          [-105.2705, 40.0120],
-          [-105.2650, 40.0090],
-          [-105.2610, 40.0060]
-        ];
-
-        // Visualize stops (pins) regardless of routing
-        var stopsGeoJSON = {
-          type: 'FeatureCollection',
-          features: [
-            { type: 'Feature', properties: { name: 'Stop A' }, geometry: { type: 'Point', coordinates: waypoints[0] } },
-            { type: 'Feature', properties: { name: 'Stop B' }, geometry: { type: 'Point', coordinates: waypoints[2] } },
-            { type: 'Feature', properties: { name: 'Stop C' }, geometry: { type: 'Point', coordinates: waypoints[4] } }
-          ]
-        };
-        if (!map.getSource('demo-stops')) {
-          map.addSource('demo-stops', { type: 'geojson', data: stopsGeoJSON });
-        } else {
-          map.getSource('demo-stops').setData(stopsGeoJSON);
-        }
-        if (!map.getLayer('demo-stops-circles')) {
-          map.addLayer({ id: 'demo-stops-circles', type: 'circle', source: 'demo-stops', paint: { 'circle-radius': 5, 'circle-color': '#ef4444', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1 } });
-        }
-        if (!map.getLayer('demo-stops-labels')) {
-          map.addLayer({ id: 'demo-stops-labels', type: 'symbol', source: 'demo-stops', layout: { 'text-field': ['get', 'name'], 'text-size': 12, 'text-offset': [0, 1.2], 'text-anchor': 'top' }, paint: { 'text-color': '#111827' } });
-        }
-
-        // Request a street-following route from Mapbox Directions API
-        var coordsParam = waypoints.map(function (c) { return c[0] + ',' + c[1]; }).join(';');
-        var url = 'https://api.mapbox.com/directions/v5/mapbox/driving/' + coordsParam + '?geometries=geojson&overview=full&access_token=' + encodeURIComponent(mapboxgl.accessToken);
-
-        fetch(url)
-          .then(function (r) { if (!r.ok) throw new Error('Directions request failed: ' + r.status); return r.json(); })
-          .then(function (json) {
-            if (!json.routes || !json.routes[0]) throw new Error('No route found');
-            var line = json.routes[0].geometry; // GeoJSON LineString
-
-            // Add/update route source and layer
-            var routeFC = { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { name: 'Routed' }, geometry: line }] };
-            if (!map.getSource('demo-route')) {
-              map.addSource('demo-route', { type: 'geojson', data: routeFC });
-            } else {
-              map.getSource('demo-route').setData(routeFC);
-            }
-            if (!map.getLayer('demo-route-line')) {
-              map.addLayer({ id: 'demo-route-line', type: 'line', source: 'demo-route', paint: { 'line-color': '#2563eb', 'line-width': 4 } });
-            }
-
-            // Fit to route
-            try {
-              var Bounds = (mapboxgl && mapboxgl.LngLatBounds);
-              var b = new Bounds();
-              line.coordinates.forEach(function (c) { b.extend(c); });
-              map.fitBounds(b, { padding: 50, duration: 0 });
-            } catch (e) { console.warn('Could not fit bounds:', e); }
-
-            // Animate a fake bus along the route
-            animateBus(map, line.coordinates);
-          })
-          .catch(function (err) {
-            console.error(err);
-            setStatus('Routing failed, showing straight line', 'status-warn');
-            // Fallback: draw straight line through waypoints
-            var straight = { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: waypoints } }] };
-            if (!map.getSource('demo-route')) map.addSource('demo-route', { type: 'geojson', data: straight }); else map.getSource('demo-route').setData(straight);
-            if (!map.getLayer('demo-route-line')) map.addLayer({ id: 'demo-route-line', type: 'line', source: 'demo-route', paint: { 'line-color': '#2563eb', 'line-width': 4 } });
-            animateBus(map, waypoints);
-          });
-
-        function animateBus(map, pathCoords) {
-          // Create a simple bus marker
-          var el = document.createElement('div');
-          el.style.width = '20px';
-          el.style.height = '20px';
-          el.style.background = '#10b981';
-          el.style.border = '2px solid white';
-          el.style.borderRadius = '50%';
-          el.style.boxShadow = '0 0 6px rgba(0,0,0,0.3)';
-          el.title = 'Bus';
-          var marker = new mapboxgl.Marker({ element: el }).setLngLat(pathCoords[0]).addTo(map);
-
-          var segIndex = 0; // which segment
-          var t = 0;        // 0..1 along segment
-          var speed = 0.01; // tune for speed (~meters per frame proxy)
-
-          function lerp(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; }
-          function animate() {
-            var a = pathCoords[segIndex];
-            var b = pathCoords[segIndex + 1];
-            if (!b) { segIndex = 0; t = 0; a = pathCoords[0]; b = pathCoords[1]; }
-            t += speed;
-            if (t >= 1) { t = 0; segIndex++; }
-            var p = lerp(a, b, t);
-            marker.setLngLat(p);
-            requestAnimationFrame(animate);
+        // Helpers shared by Mapbox GL + MapLibre
+        function fetchJSON(url){ return fetch(url).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }); }
+        function stopsToFC(stops){ return { type:'FeatureCollection', features: stops.map(function(s){ return { type:'Feature', properties:{ name:s.stop_name }, geometry:{ type:'Point', coordinates:[+s.lon, +s.lat] } }; })}; }
+        function upsertSource(map, id, data){ if(map.getSource(id)){ map.getSource(id).setData(data); } else { map.addSource(id, { type:'geojson', data: data }); } }
+        function ensureLayers(map){
+          if(!map.getLayer('route-line')){
+            map.addLayer({ id:'route-line', type:'line', source:'route', paint:{ 'line-color':'#2563eb','line-width':4 } });
           }
-          requestAnimationFrame(animate);
+          if(!map.getLayer('stops-circles')){
+            map.addLayer({ id:'stops-circles', type:'circle', source:'stops', paint:{ 'circle-radius':5,'circle-color':'#ef4444','circle-stroke-color':'#fff','circle-stroke-width':1 }});
+          }
+          if(!map.getLayer('stops-labels')){
+            map.addLayer({ id:'stops-labels', type:'symbol', source:'stops', layout:{ 'text-field':['get','name'], 'text-size':12, 'text-offset':[0,1.2], 'text-anchor':'top' }, paint:{ 'text-color':'#111827' }});
+          }
         }
+        function fitToShape(map, shapeFC){ try { var Bounds = (window.mapboxgl && mapboxgl.LngLatBounds) || (window.maplibregl && maplibregl.LngLatBounds); var b = new Bounds(); var coords = shapeFC.features[0].geometry.coordinates; coords.forEach(function(c){ b.extend(c); }); map.fitBounds(b, { padding: 50, duration: 0 }); } catch(e){ console.warn('fit bounds failed', e);} }
+
+        function loadRoute(map, routeId, directionId){
+          Promise.all([
+            fetchJSON('/api/routes/' + encodeURIComponent(routeId) + '/shape?direction_id=' + directionId),
+            fetchJSON('/api/routes/' + encodeURIComponent(routeId) + '/stops?direction_id=' + directionId)
+          ]).then(function(results){
+            var shape = results[0];
+            var stops = results[1];
+            upsertSource(map, 'route', shape);
+            upsertSource(map, 'stops', stopsToFC(stops));
+            ensureLayers(map);
+            fitToShape(map, shape);
+            setStatus('Route ' + routeId + ' dir ' + directionId + ' loaded', 'status-info');
+
+            // Kick off estimate polling for this route/direction
+            startEstimatePolling(map, routeId, directionId);
+          }).catch(function(err){ console.error('loadRoute error', err); setStatus('loadRoute error: ' + err.message, 'status-warn'); });
+        }
+
+        // --- Estimated position polling (every ~25s) ---
+        var estimateTimer = null;
+        var estimateMarker = null;
+        function updateEstimate(map, routeId, directionId){
+          fetchJSON('/api/routes/' + encodeURIComponent(routeId) + '/estimate?direction_id=' + directionId)
+            .then(function(e){
+              if (!e || !e.position) return;
+              var lngLat = [e.position.lng, e.position.lat];
+              if (!estimateMarker) {
+                var el = document.createElement('div');
+                el.style.width = '18px';
+                el.style.height = '18px';
+                el.style.background = '#10b981';
+                el.style.border = '2px solid #fff';
+                el.style.borderRadius = '50%';
+                el.style.boxShadow = '0 0 6px rgba(0,0,0,0.3)';
+                el.title = 'Estimated Bus';
+                estimateMarker = new mapboxgl.Marker({ element: el, rotationAlignment: 'map' })
+                  .setLngLat(lngLat)
+                  .addTo(map);
+              } else {
+                estimateMarker.setLngLat(lngLat);
+              }
+            })
+            .catch(function(err){ console.error('estimate fetch error', err); });
+        }
+        function startEstimatePolling(map, routeId, directionId){
+          if (estimateTimer) { clearInterval(estimateTimer); estimateTimer = null; }
+          // reset existing marker between routes
+          if (estimateMarker && estimateMarker.remove) { estimateMarker.remove(); estimateMarker = null; }
+          // initial fetch immediately
+          updateEstimate(map, routeId, directionId);
+          // poll roughly every 25 seconds
+          estimateTimer = setInterval(function(){ updateEstimate(map, routeId, directionId); }, 25000);
+        }
+
+        // --- Routes list (MVP) ---
+        var state = { currentRouteId: 'FF1', currentDir: 0 };
+        function selectRoute(routeId){
+          // Get available directions; pick the first
+          fetchJSON('/api/routes/' + encodeURIComponent(routeId) + '/directions')
+            .then(function(dirs){
+              var dir = Array.isArray(dirs) && dirs.length ? dirs[0] : 0;
+              state.currentRouteId = routeId; state.currentDir = dir;
+              loadRoute(map, routeId, dir);
+            })
+            .catch(function(err){ console.error('directions error', err); setStatus('directions error: ' + err.message, 'status-warn'); });
+        }
+        function loadRoutesList(){
+          fetchJSON('/api/routes')
+            .then(function(routes){
+              var ul = document.getElementById('routeList');
+              var countEl = document.getElementById('routesCount');
+              if (countEl) countEl.textContent = '(' + routes.length + ')';
+              ul.innerHTML = '';
+              routes.slice(0, 40).forEach(function(r){
+                var li = document.createElement('li');
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = (r.route_short_name || r.route_id) + ' — ' + (r.route_long_name || '');
+                btn.style.cssText = 'display:block;width:100%;text-align:left;padding:4px 6px;margin:2px 0;border:1px solid #ddd;border-radius:4px;background:#f8f9fa;cursor:pointer;';
+                btn.addEventListener('click', function(){ selectRoute(r.route_id); });
+                li.appendChild(btn);
+                ul.appendChild(li);
+              });
+            })
+            .catch(function(err){ console.error('loadRoutesList error', err); });
+        }
+
+        // Draw a real GTFS route without adding any extra HTML
+        loadRoute(map, state.currentRouteId, state.currentDir);
+        loadRoutesList();
       });
       map.on('error', function (e) {
         console.error('Mapbox GL error:', e && e.error ? e.error : e);
@@ -281,56 +295,102 @@
           map.on('load', function () {
             setStatus('fallback loaded (MapLibre)', 'status-info');
 
-            // --- Demo (MapLibre fallback): route + stops ---
-            var routeGeoJSON = {
-              type: 'FeatureCollection',
-              features: [
-                {
-                  type: 'Feature',
-                  properties: { name: 'Test Route' },
-                  geometry: {
-                    type: 'LineString',
-                    coordinates: [
-                      [-105.2760, 40.0190],
-                      [-105.2730, 40.0145],
-                      [-105.2705, 40.0120],
-                      [-105.2650, 40.0090],
-                      [-105.2610, 40.0060]
-                    ]
+            // Use same API-driven flow as Mapbox path
+            function fetchJSON(url){ return fetch(url).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }); }
+            function stopsToFC(stops){ return { type:'FeatureCollection', features: stops.map(function(s){ return { type:'Feature', properties:{ name:s.stop_name }, geometry:{ type:'Point', coordinates:[+s.lon, +s.lat] } }; })}; }
+            function upsertSource(map, id, data){ if(map.getSource(id)){ map.getSource(id).setData(data); } else { map.addSource(id, { type:'geojson', data: data }); } }
+            function ensureLayers(map){
+              if(!map.getLayer('route-line')){
+                map.addLayer({ id:'route-line', type:'line', source:'route', paint:{ 'line-color':'#2563eb','line-width':4 } });
+              }
+              if(!map.getLayer('stops-circles')){
+                map.addLayer({ id:'stops-circles', type:'circle', source:'stops', paint:{ 'circle-radius':5,'circle-color':'#ef4444','circle-stroke-color':'#fff','circle-stroke-width':1 }});
+              }
+              if(!map.getLayer('stops-labels')){
+                map.addLayer({ id:'stops-labels', type:'symbol', source:'stops', layout:{ 'text-field':['get','name'], 'text-size':12, 'text-offset':[0,1.2], 'text-anchor':'top' }, paint:{ 'text-color':'#111827' }});
+              }
+            }
+            function fitToShape(map, shapeFC){ try { var Bounds = (window.mapboxgl && mapboxgl.LngLatBounds) || (window.maplibregl && maplibregl.LngLatBounds); var b = new Bounds(); var coords = shapeFC.features[0].geometry.coordinates; coords.forEach(function(c){ b.extend(c); }); map.fitBounds(b, { padding: 50, duration: 0 }); } catch(e){ console.warn('fit bounds failed', e);} }
+
+            function loadRoute(map, routeId, directionId){
+              Promise.all([
+                fetchJSON('/api/routes/' + encodeURIComponent(routeId) + '/shape?direction_id=' + directionId),
+                fetchJSON('/api/routes/' + encodeURIComponent(routeId) + '/stops?direction_id=' + directionId)
+              ]).then(function(results){
+                var shape = results[0];
+                var stops = results[1];
+                upsertSource(map, 'route', shape);
+                upsertSource(map, 'stops', stopsToFC(stops));
+                ensureLayers(map);
+                fitToShape(map, shape);
+                setStatus('Route ' + routeId + ' dir ' + directionId + ' loaded', 'status-info');
+                startEstimatePolling(map, routeId, directionId);
+              }).catch(function(err){ console.error('loadRoute error', err); setStatus('loadRoute error: ' + err.message, 'status-warn'); });
+            }
+
+            var estimateTimer = null;
+            var estimateMarker = null;
+            function updateEstimate(map, routeId, directionId){
+              fetchJSON('/api/routes/' + encodeURIComponent(routeId) + '/estimate?direction_id=' + directionId)
+                .then(function(e){
+                  if (!e || !e.position) return;
+                  var lngLat = [e.position.lng, e.position.lat];
+                  if (!estimateMarker) {
+                    var el = document.createElement('div');
+                    el.style.width = '18px'; el.style.height = '18px';
+                    el.style.background = '#10b981'; el.style.border = '2px solid #fff';
+                    el.style.borderRadius = '50%'; el.style.boxShadow = '0 0 6px rgba(0,0,0,0.3)';
+                    el.title = 'Estimated Bus';
+                    estimateMarker = new maplibregl.Marker({ element: el })
+                      .setLngLat(lngLat)
+                      .addTo(map);
+                  } else {
+                    estimateMarker.setLngLat(lngLat);
                   }
-                }
-              ]
-            };
-            var stopsGeoJSON = {
-              type: 'FeatureCollection',
-              features: [
-                { type: 'Feature', properties: { name: 'Stop A' }, geometry: { type: 'Point', coordinates: [-105.2760, 40.0190] } },
-                { type: 'Feature', properties: { name: 'Stop B' }, geometry: { type: 'Point', coordinates: [-105.2705, 40.0120] } },
-                { type: 'Feature', properties: { name: 'Stop C' }, geometry: { type: 'Point', coordinates: [-105.2610, 40.0060] } }
-              ]
-            };
-            if (!map.getSource('demo-route')) {
-              map.addSource('demo-route', { type: 'geojson', data: routeGeoJSON });
+                })
+                .catch(function(err){ console.error('estimate fetch error', err); });
             }
-            if (!map.getLayer('demo-route-line')) {
-              map.addLayer({ id: 'demo-route-line', type: 'line', source: 'demo-route', paint: { 'line-color': '#3b82f6', 'line-width': 4 } });
+            function startEstimatePolling(map, routeId, directionId){
+              if (estimateTimer) { clearInterval(estimateTimer); estimateTimer = null; }
+              if (estimateMarker && estimateMarker.remove) { estimateMarker.remove(); estimateMarker = null; }
+              updateEstimate(map, routeId, directionId);
+              estimateTimer = setInterval(function(){ updateEstimate(map, routeId, directionId); }, 25000);
             }
-            if (!map.getSource('demo-stops')) {
-              map.addSource('demo-stops', { type: 'geojson', data: stopsGeoJSON });
+
+            var state = { currentRouteId: 'FF1', currentDir: 0 };
+            function selectRoute(routeId){
+              fetchJSON('/api/routes/' + encodeURIComponent(routeId) + '/directions')
+                .then(function(dirs){
+                  var dir = Array.isArray(dirs) && dirs.length ? dirs[0] : 0;
+                  state.currentRouteId = routeId; state.currentDir = dir;
+                  loadRoute(map, routeId, dir);
+                })
+                .catch(function(err){ console.error('directions error', err); setStatus('directions error: ' + err.message, 'status-warn'); });
             }
-            if (!map.getLayer('demo-stops-circles')) {
-              map.addLayer({ id: 'demo-stops-circles', type: 'circle', source: 'demo-stops', paint: { 'circle-radius': 5, 'circle-color': '#ef4444', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1 } });
+            function loadRoutesList(){
+              fetchJSON('/api/routes')
+                .then(function(routes){
+                  var ul = document.getElementById('routeList');
+                  var countEl = document.getElementById('routesCount');
+                  if (countEl) countEl.textContent = '(' + routes.length + ')';
+                  ul.innerHTML = '';
+                  routes.slice(0, 40).forEach(function(r){
+                    var li = document.createElement('li');
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.textContent = (r.route_short_name || r.route_id) + ' — ' + (r.route_long_name || '');
+                    btn.style.cssText = 'display:block;width:100%;text-align:left;padding:4px 6px;margin:2px 0;border:1px solid #ddd;border-radius:4px;background:#f8f9fa;cursor:pointer;';
+                    btn.addEventListener('click', function(){ selectRoute(r.route_id); });
+                    li.appendChild(btn);
+                    ul.appendChild(li);
+                  });
+                })
+                .catch(function(err){ console.error('loadRoutesList error', err); });
             }
-            if (!map.getLayer('demo-stops-labels')) {
-              map.addLayer({ id: 'demo-stops-labels', type: 'symbol', source: 'demo-stops', layout: { 'text-field': ['get', 'name'], 'text-size': 12, 'text-offset': [0, 1.2], 'text-anchor': 'top' }, paint: { 'text-color': '#111827' } });
-            }
-            try {
-              var Bounds = (window.mapboxgl && mapboxgl.LngLatBounds) || (window.maplibregl && maplibregl.LngLatBounds);
-              var b = new Bounds();
-              routeGeoJSON.features[0].geometry.coordinates.forEach(function (c) { b.extend(c); });
-              map.fitBounds(b, { padding: 40, duration: 0 });
-            } catch (e) { console.warn('Could not fit bounds:', e); }
-            // --- End demo ---
+
+            // Start with default and load list
+            loadRoute(map, state.currentRouteId, state.currentDir);
+            loadRoutesList();
           });
           map.on('error', function (e) { console.error('MapLibre error:', e); setStatus('MapLibre error: see console', 'status-warn'); });
         })
