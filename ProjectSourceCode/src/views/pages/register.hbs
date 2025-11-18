@@ -1,8 +1,10 @@
 {{> header}}
 
+<link rel="stylesheet" href="/css/register.css" />
+
 <main class="register-page">
   <section class="register-card">
-    <h1 class="text-center">Register</h1>
+    <h1 class="register-header text-center">Register</h1>
 
     <form action="/register" method="POST" class="register-form" id="registerForm">
       <div class="mb-3">
@@ -41,11 +43,12 @@
       <button type="submit" class="register-submit" id="registerSubmit" disabled>Register</button>
     </form>
 
-    <p class="text-center register-feedback" id="passwordFeedback"></p>
-
-    <p class="text-center">
+    <p class="register-to-login text-center">
       Already have an account? <a href="/login">Login</a>
     </p>
+
+    <p class="text-center register-feedback" id="passwordFeedback"></p>
+
   </section>
 </main>
 

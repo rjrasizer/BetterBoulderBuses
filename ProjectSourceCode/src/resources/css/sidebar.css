@@ -1,0 +1,114 @@
+:root {
+    --color-sidebar: #333333;
+    --color-toggle: #cfb87c;
+    --width-sidebar: 28em;
+}
+
+.sidebar-toggle.is-closed {
+  transform: translateY(-50%) rotate(0deg);
+}
+
+.sidebar-toggle .icon {
+  font-size: 1.5rem;
+  color: var(--white);
+}
+
+.sidebar {
+  font-family: "Momo Trust Display", sans-serif;
+  width: var(--width-sidebar);
+  height: 100vh;
+  background-color: var(--color-sidebar);
+  position: fixed;
+  left: 0;
+  top: 0;
+  transition: 0.7s;
+  z-index: 1500;
+}
+
+.sidebar.is-closed {
+  transform: translateX(calc(-1 * var(--width-sidebar)));
+}
+
+.sidebar-toggle {
+  position: absolute;
+  z-index: 2000;
+  right: -30px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  
+  border: 4px solid var(--white);
+  outline: none;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: var(--color-toggle);
+  cursor: pointer;
+  transition: 0.5s;
+}
+
+.sidebar-title {
+  font-size: 64px;
+  font-weight: 300;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  color: #ffffff;
+}
+
+.sidebar-header {
+  border-bottom: 1px solid #cfb87c;
+  padding-bottom: 0.5rem;
+}
+
+/* Mobile sidebar */
+@media (max-width: 600px) {
+    .sidebar {
+        width: 100%;
+        height: 65vh;
+        bottom: 0;
+        top: auto;
+        left: 0;
+        transform: translateY(100%);
+    }
+
+    .sidebar-header {
+        /* padding-top: 0.5rem;
+        padding-bottom: 0.5rem; */
+        margin-top: -3rem;
+    }
+
+    .sidebar.is-open {
+        transform: translateY(0);
+    }
+
+    .sidebar.is-closed {
+        transform: translateY(100%);
+    }
+
+    /* Mobile toggle at top of sidebar */
+    .sidebar-toggle {
+        position: relative;  /* inside sidebar */
+        top: 0;
+        right: auto;
+        left: auto;
+        transform: none;     /* reset transform */
+        margin: 0rem auto 0 auto; /* spacing from top, centered horizontally */
+        display: block;
+    }
+}
+
+.sidebar-scroll-container {
+    max-height: 100%;      
+    overflow-y: auto;       
+    padding: 0.5rem 1rem;  
+    box-sizing: border-box; 
+}
+
+/* Optional: nice scrollbar styles */
+.sidebar-scroll-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
