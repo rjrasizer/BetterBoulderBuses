@@ -5,27 +5,38 @@
   --cu-dark-gray: #565A5C;
 }
 
+.register-page,
+.register-card,
+.register-form,
+.register-form input,
+.register-submit {
+  font-family: "Outfit", sans-serif;
+}
+
 
 body {
   background-color: #fff;
   color: #212529;
-  font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .register-page {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding: 4rem 1.25rem 3rem;
+  align-items: center;
+  min-height: 80vh;
+  padding: 2rem 1.25rem;
+  background: #fff;
 }
 
 .register-card {
   width: 100%;
   max-width: 420px;
-  background-color: transparent;
-  border: none;
+  background-color: #fff;
   border-radius: 0.75rem;
-  padding: 2.5rem 0;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  text-align: center;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -45,11 +56,6 @@ body {
   border-radius: 0.5rem;
   padding: 0.85rem 1rem;
   text-align: center;
-}
-
-.form-control:focus {
-  border-color: #000;
-  box-shadow: none;
 }
 
 .register-submit {
@@ -97,4 +103,17 @@ body {
   .register-card {
     padding: 2rem 0;
   }
+}
+
+.register-header {
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: var(--cu-black);
+  text-align: center;
+}
+
+.register-to-login {
+  padding: 0rem;
 }

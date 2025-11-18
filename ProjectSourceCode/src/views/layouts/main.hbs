@@ -4,23 +4,26 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Better Boulder Buses</title>
-        <!-- Static assets are served from / (express.static(__dirname + '/resources')) -->
-        <link rel="stylesheet" href="/css/style.css" />
+
+        {{!-- Globals --}}
         <link rel="stylesheet" href="/css/globals.css" />
         <link rel="stylesheet" href="/css/styleguide.css" />
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"rel="stylesheet"/>
-        <link rel="stylesheet" href="/css/register.css" />
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"/>
+       
+        {{!-- CSS Styling --}}
+        <link rel="stylesheet" href="/css/style.css" />
 
-        <!-- Mapbox GL CSS (available site-wide; safe to include) -->
+        {{!-- Bootstrap Stylesheet / Google Fonts / Mapbox --}}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"/>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Momo+Trust+Display&family=Outfit:wght@100..900&display=swap" rel="stylesheet">
         <link href="https://api.mapbox.com/mapbox-gl-js/v2.16.1/mapbox-gl.css" rel="stylesheet" />
+
     </head>
     <body>
         {{!-- {{> header}} --}}
         {{{body}}}
-        
         <script src="js/script.js"></script>
-        
         <script src="/js/script.js"></script>
     </body>
 
