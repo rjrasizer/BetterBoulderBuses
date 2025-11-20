@@ -132,6 +132,11 @@
   </div>
 </div>
 
+<div id="settings-btn">
+  <a href="/settings" aria-label="Open settings">
+    <i class="bi bi-gear-fill"></i>
+  </a>
+</div>
 <div id="map" role="region" aria-label="Interactive transit map"></div>
 
 <a href="/settings" class="position-fixed top-0 end-0 m-3 text-dark">
@@ -247,7 +252,7 @@
         center: [-105.2705, 40.0150],
         zoom: 12
       });
-      map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
       map.on('load', function () {
         setStatus('loaded', 'status-info');
 
@@ -377,7 +382,7 @@
             center: [-105.2705, 40.0150],
             zoom: 12
           });
-          map.addControl(new maplibregl.NavigationControl(), 'top-right');
+          map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
           map.on('load', function () {
             setStatus('fallback loaded (MapLibre)', 'status-info');
 
