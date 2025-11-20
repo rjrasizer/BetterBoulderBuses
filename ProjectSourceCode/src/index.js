@@ -66,7 +66,85 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(bodyParser.json()); // specify the usage of JSON for parsing request body.
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    saveUninitialized: false,
+    resave: false,
+  })
+);
+
+const auth = (req, res, next) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  next();
+};
+
+// ===== Change Password Logic =====
+app.post('/settings/change-password', auth, async (req, res) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+  const username = req.session.user.username;
+
+  try {
+    if (newPassword !== confirmPassword) {
+      return res.render('pages/settings', {
+        activeTab: "profile",
+        userData: { username },
+        message: "New passwords do not match",
+        error: true
+      });
+    }
+
+    // Get user from DB
+    const user = await db.oneOrNone(
+      'SELECT * FROM users WHERE username = $1',
+      [username]
+    );
+
+    if (!user) {
+      return res.redirect('/login');
+    }
+
+    // Check current password is correct
+    const match = await bcrypt.compare(currentPassword, user.password);
+    if (!match) {
+      return res.render('pages/settings', {
+        activeTab: "profile",
+        userData: { username },
+        message: "Current password is incorrect",
+        error: true
+      });
+    }
+
+    // Hash and update new password
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    await db.none(
+      'UPDATE users SET password = $1 WHERE username = $2',
+      [hashed, username]
+    );
+
+    res.render('pages/settings', {
+      activeTab: "profile",
+      userData: { username },
+      message: "Password updated successfully",
+      success: true
+    });
+
+  } catch (err) {
+    console.error('Password update error:', err);
+    res.render('pages/settings', {
+      activeTab: "profile",
+      userData: { username },
+      message: "Something went wrong",
+      error: true
+    });
+  }
+});
+
 app.use(express.static(path.join(__dirname, 'resources')));
+
 
 // initialize session variables
 app.use(
@@ -82,13 +160,6 @@ app.use(
 // *****************************************************
 
 // ------------ Authentication Middleware ----------
-const auth = (req, res, next) => {
-  if (!req.session.user) {
-    // Default to login page.
-    return res.redirect('/login');
-  }
-  next();
-};
 
 app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});

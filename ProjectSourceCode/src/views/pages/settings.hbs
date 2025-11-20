@@ -1,31 +1,159 @@
-<div class="d-flex min-vh-100">
-    {{> settings/sidebar activeTab=activeTab userData=userData }}
+<div class="settings-page">
 
-    <main class="flex-grow-1 p-4 bg-light">
-        <div class="container py-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    {{#if (eq activeTab "profile")}}
-                    {{> settings/profile userData=userData }}
-                    {{/if}}
+  <!-- Top Navigation Tabs -->
+  <div class="settings-tabs">
+    <a href="/settings?tab=profile" class="{{#if (eq activeTab 'profile')}}active{{/if}}">Account</a>
+    <a href="/settings?tab=notifications" class="{{#if (eq activeTab 'notifications')}}active{{/if}}">Notifications</a>
+    <a href="/settings?tab=help" class="{{#if (eq activeTab 'help')}}active{{/if}}">Help</a>
+    <a href="/logout" class="logout-tab">Logout</a>
+  </div>
 
-                    {{#if (eq activeTab "notifications")}}
-                    {{> settings/notifications userData=userData }}
-                    {{/if}}
+  <!-- Main Content -->
+  <div class="settings-container">
+    <div class="settings-card">
 
-                    {{#if (eq activeTab "security")}}
-                    {{> settings/security }}
-                    {{/if}}
+      {{!-- ========== ACCOUNT / MANAGE PROFILE ========== --}}
+      {{#if (eq activeTab "profile")}}
 
-                    {{#if (eq activeTab "preferences")}}
-                    {{> settings/preferences userData=userData }}
-                    {{/if}}
+      <h3 class="settings-title">Manage Account</h3>
 
-                    {{#if (eq activeTab "help")}}
-                    {{> settings/help }}
-                    {{/if}}
-                </div>
-            </div>
+      {{#if message}}
+        <div class="alert {{#if error}}alert-danger{{else}}alert-success{{/if}}">
+          {{message}}
         </div>
-    </main>
+      {{/if}}
+
+      <form method="POST" action="/settings/profile/update" class="mb-4">
+
+        <div class="mb-3">
+          <label class="form-label">Username</label>
+          <input 
+            class="form-control bg-light"
+            type="text"
+            value="{{userData.username}}"
+            disabled
+          >
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Full Name</label>
+          <input 
+            type="text"
+            name="name"
+            class="form-control"
+            placeholder="Enter your name"
+            value="{{userData.name}}"
+          >
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label">Email</label>
+          <input 
+            type="email"
+            name="email"
+            class="form-control"
+            placeholder="Enter your email"
+            value="{{userData.email}}"
+          >
+        </div>
+
+        <button type="submit" class="btn btn-dark">
+          Save Changes
+        </button>
+      </form>
+
+      <div class="section-divider"></div>
+
+      <h5 class="settings-subtitle">Change Password</h5>
+
+      <form method="POST" action="/settings/change-password">
+
+        <div class="mb-3">
+          <input 
+            type="password" 
+            name="currentPassword"
+            class="form-control"
+            placeholder="Current password"
+            required
+          >
+        </div>
+
+        <div class="mb-3">
+          <input 
+            type="password" 
+            name="newPassword"
+            class="form-control"
+            placeholder="New password"
+            required
+          >
+        </div>
+
+        <div class="mb-4">
+          <input 
+            type="password" 
+            name="confirmPassword"
+            class="form-control"
+            placeholder="Confirm new password"
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn btn-outline-dark">
+          Update Password
+        </button>
+
+      </form>
+
+      {{/if}}
+
+      {{!-- ========== NOTIFICATIONS ========== --}}
+      {{#if (eq activeTab "notifications")}}
+
+      <h3 class="settings-title">Notifications</h3>
+
+      <form method="POST" action="/settings/notifications/update">
+
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-title">Bus Arrival Alerts</div>
+            <div class="toggle-desc">Get notified when your bus is close</div>
+          </div>
+          <input class="form-check-input" type="checkbox" name="busAlerts">
+        </div>
+
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-title">Delay Notifications</div>
+            <div class="toggle-desc">Be notified of service disruptions</div>
+          </div>
+          <input class="form-check-input" type="checkbox" name="delayAlerts">
+        </div>
+
+        <button type="submit" class="btn btn-dark">
+          Save Notification Settings
+        </button>
+
+      </form>
+
+      {{/if}}
+
+      {{!-- ========== HELP ========== --}}
+      {{#if (eq activeTab "help")}}
+
+      <h3 class="settings-title">Help & Support</h3>
+
+      <div class="help-box mb-4">
+        <div>• How do I track a bus?</div>
+        <div>• Why is my bus delayed?</div>
+        <div>• How do notifications work?</div>
+      </div>
+
+      <a href="mailto:support@betterboulderbuses.com" class="btn btn-outline-dark">
+        Contact Support
+      </a>
+
+      {{/if}}
+
+    </div>
+  </div>
 </div>
