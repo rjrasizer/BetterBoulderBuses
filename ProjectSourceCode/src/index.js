@@ -503,7 +503,12 @@ app.get('/logout', (req, res) => {
 });
 
 
-module.exports = app.listen(3000, () => console.log('Server running on port 3000'));
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+module.exports = app; // export the app itself, not the server instance
+
 
 //eq helper for settings page
 // import exphbs from "express-handlebars";
