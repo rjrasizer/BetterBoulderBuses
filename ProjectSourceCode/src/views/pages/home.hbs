@@ -47,6 +47,66 @@
   .overlay .status-info {
     color: #0d6efd;
   }
+
+
+  #settings-btn {
+ position: fixed;
+ top: 16px;
+ right: 16px;
+ z-index: 10;
+}
+
+
+#settings-btn a {
+ display: flex;
+ align-items: center;
+ justify-content: center;
+
+
+ width: 42px;
+ height: 42px;
+
+
+ background: rgba(255, 255, 255, 0.9);
+ border-radius: 12px;
+
+
+ box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+ backdrop-filter: blur(6px);
+
+
+ text-decoration: none;
+ color: #333;
+ transition: background 0.2s ease, transform 0.2s ease;
+}
+
+
+#settings-btn i {
+ font-size: 20px;
+}
+
+
+/* Continuous spin animation */
+@keyframes spin-gear {
+ from {
+   transform: rotate(0deg);
+ }
+ to {
+   transform: rotate(360deg);
+ }
+}
+
+
+#settings-btn:hover a {
+ background: rgba(255, 255, 255, 1);
+}
+
+
+#settings-btn:hover i {
+ animation: spin-gear 0.8s linear infinite;
+}
+
+
 </style>
 
 <link rel="stylesheet" href="/css/sidebar.css" />
