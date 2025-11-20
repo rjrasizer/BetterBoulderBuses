@@ -7,8 +7,8 @@ const MAX_RETRIES = 30;
 const RETRY_DELAY_MS = 1000;
 
 const config = {
-  host: 'db',
-  port: 5432,
+  host: process.env.POSTGRES_HOST,
+  port: process.env.POSTGRES_PORT,
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DB,
