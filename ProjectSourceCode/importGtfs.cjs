@@ -34,13 +34,17 @@ async function createTableFromHeader(tableName, headers) {
   console.log(`🧱 Created table: ${tableName}`);
 }
 
-async function importCsvToTable(tableName, filePath) {
+async function importCsvToTable(tableName, filePath, headers) {
   console.log(`⬆️  Importing ${tableName}...`);
   const client = await db.connect();
   const fileStream = fs.createReadStream(filePath);
 
   try {
-    const copyStream = client.client.query(from(`COPY "${tableName}" FROM STDIN WITH CSV HEADER`));
+    // Explicitly list columns so extra derived columns (like departure_secs)
+    // do not break COPY when re-running imports.
+    const columnList = headers.map(h => `"${h}"`).join(', ');
+    const copySql = `COPY "${tableName}" (${columnList}) FROM STDIN WITH CSV HEADER`;
+    const copyStream = client.client.query(from(copySql));
     await new Promise((resolve, reject) => {
       fileStream.pipe(copyStream)
         .on('finish', resolve)
@@ -82,7 +86,7 @@ async function runImport() {
       }
 
       await createTableFromHeader(tableName, headers);
-      await importCsvToTable(tableName, filePath);
+      await importCsvToTable(tableName, filePath, headers);
     }
 
     console.log('🎉 All GTFS files imported successfully!');

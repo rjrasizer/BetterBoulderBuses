@@ -98,7 +98,7 @@ INSERT INTO service_dates(service_id, service_date, active)
 SELECT cd.service_id, to_date(cd.date,'YYYYMMDD'), true
 FROM calendar_dates cd
 WHERE COALESCE(NULLIF(cd.exception_type,'')::int, 0) = 1
-ON CONFLICT (service_id, service_date) DO UPDATE SET active = EXCLUDED.active;
+ON CONFLICT (service_id, service_date) DO NOTHING;
 
 -- Representative trip per route+direction
 CREATE TABLE IF NOT EXISTS route_representatives(

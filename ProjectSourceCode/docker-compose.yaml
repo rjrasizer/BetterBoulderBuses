@@ -8,6 +8,12 @@ services:
     volumes:
       - group-project:/var/lib/postgresql/data # will also change if using firebase
       - ./src/init_data:/docker-entrypoint-initdb.d # will also change if using firebase
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-users_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
   web:
     image: node:lts
     user: 'node'
@@ -25,7 +31,11 @@ services:
       - '3000:3000'
     volumes:
       - ./:/repository
-    command: 'npm run testandrun'
+    command: >
+      sh -c "npm run db:wait &&
+             npm run db:import-gtfs &&
+             npm run db:prepare-gtfs &&
+             npm run testandrun"
 
 volumes:
   group-project:
