@@ -503,7 +503,25 @@ app.get('/logout', (req, res) => {
 });
 
 
-module.exports = app.listen(3000, () => console.log('Server running on port 3000'));
+const PORT = process.env.PORT || 3000;
+
+// Start the server immediately
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+
+  // Async DB setup AFTER server is running
+  (async () => {
+    try {
+      console.log('Starting DB setup...');
+      await require('./scripts/wait_for_db.cjs')();
+      await require('./importGtfs.cjs')();
+      console.log('DB setup complete.');
+    } catch (e) {
+      console.error('DB setup failed:', e);
+    }
+  })();
+});
+
 
 //eq helper for settings page
 // import exphbs from "express-handlebars";
