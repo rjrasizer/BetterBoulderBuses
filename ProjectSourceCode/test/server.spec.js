@@ -1,133 +1,117 @@
 // ********************** Initialize server **********************************
-
-const server = require('../src/index.js'); //TODO: Make sure the path to your index.js is correctly added 
+const  app  = require('../src/index.js'); // <-- import the Express app
 
 // ********************** Import Libraries ***********************************
-
-const chai = require('chai'); // Chai HTTP provides an interface for live integration testing of the API's.
+const chai = require('chai');
 const chaiHttp = require('chai-http');
 chai.should();
 chai.use(chaiHttp);
-const {assert, expect} = chai;
+const { assert, expect } = chai;
 
 // ********************** DEFAULT WELCOME TESTCASE ****************************
-
 describe('Server!', () => {
-  // Sample test case given to test / endpoint.
   it('Returns the default welcome message', done => {
     chai
-      .request(server)
+      .request(app)
       .get('/welcome')
       .end((err, res) => {
         expect(res).to.have.status(200);
-        expect(res.body.status).to.equals('success');
+        expect(res.body.status).to.equal('success');
         assert.strictEqual(res.body.message, 'Welcome!');
         done();
       });
   });
 });
 
-// *********************** TODO: WRITE 2 UNIT TESTCASES **************************
-
-// ********************************************************************************
-
+// *********************** Register API Tests **************************
 describe('Testing Register API', () => {
   const randomUser = `test_user_${Date.now()}`;  
-  it('positive : /register takes a new user and returns success', done => {
+
+  it('positive : /register takes a new user and redirects to /login', done => {
     chai
-      .request(server)
+      .request(app)
       .post('/register')
-      .send({username: randomUser, password: 'testPassword1'})
+      .send({ username: randomUser, password: 'testPassword1' })
       .end((err, res) => {
         expect(res).to.have.status(200);
         expect(res).to.redirectTo(/\/login$/);
         done();
       });
   });
-});
 
-it('Negative : fail to register with invalid input', done => {
-    chai.request(server)
+  it('Negative : fail to register with invalid input', done => {
+    chai
+      .request(app)
       .post('/register')
-      .send({
-        username: '', 
-        password: 123
-      })
+      .send({ username: '', password: 123 })
       .end((err, res) => {
         expect(res).to.have.status(400);
         expect(res.body).to.have.property('message', 'Invalid input');
         done();
       });
+  });
 });
 
+// *********************** Redirect Tests **************************
 describe('Testing Redirect', () => {
-  // Sample test case given to test /test endpoint.
   it('test route should redirect to /login with 302 HTTP status code', done => {
     chai
-      .request(server)
+      .request(app)
       .get('/test')
       .redirects(0)
       .end((err, res) => {
-        expect(res).to.have.status(302); // Expecting a redirect status code
-        expect(res.header.location).to.equal('/login'); // Expecting a redirect to /login with the mentioned Regex
+        expect(res).to.have.status(302);
+        expect(res.header.location).to.equal('/login');
         done();
       });
   });
 });
 
+// *********************** Render Tests **************************
 describe('Testing Render', () => {
-  // Sample test case given to test /test endpoint.
-  it('test "/login" route should render with an html response', done => {
+  it('"/login" route should render with HTML response', done => {
     chai
-      .request(server)
-      .get('/login') // for reference, see lab 8's login route (/login) which renders home.hbs
+      .request(app)
+      .get('/login')
       .end((err, res) => {
-        res.should.have.status(200); // Expecting a success status code
-        res.should.be.html; // Expecting a HTML response
+        res.should.have.status(200);
+        res.should.be.html;
         done();
       });
   });
 });
 
+// *********************** Logout Tests **************************
 describe('Logout Route Tests', () => {
   let agent;
 
   beforeEach(() => {
-    // Create a session agent
-    agent = chai.request.agent(server);
+    agent = chai.request.agent(app);
   });
 
-  it('positive: /logout should log out an authenticated user', async () => {
-    // Manually simulate login (bypass password + DB)
-    // agent.app.request.session = {
-    //   user: { username: 'mockUser' }
-    // };
-
-    // const agent = chai.request.agent(server);
+  it('positive: /logout logs out an authenticated user', async () => {
     const username = `_logoutTest${Date.now()}`;
-    await agent.post('/register').send({username: username, password: 'testPass'});
-    await agent.post('/login').send({username: username, password: 'testPass'});
+    await agent.post('/register').send({ username, password: 'testPass' });
+    await agent.post('/login').send({ username, password: 'testPass' });
 
     const res = await agent.get('/logout');
 
     expect(res).to.have.status(200);
-    // expect(res).to.be.html;
     expect(res.text).to.include('Logged out successfully');
 
     agent.close();
   });
 });
 
-
+// *********************** Logout Negative Test **************************
 describe('Logout Route Tests - Negative', () => {
-  it('negative: /logout should redirect to /login when not authenticated', done => {
+  it('negative: /logout redirects to /login when not authenticated', done => {
     chai
-      .request(server)
+      .request(app)
       .get('/logout')
       .redirects(0)
       .end((err, res) => {
         expect(res).to.have.status(302);
-        //expect(res).to.redirect;
         expect(res.header.location).to.equal('/login');
         done();
       });

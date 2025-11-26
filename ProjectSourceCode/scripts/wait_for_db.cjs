@@ -1,9 +1,8 @@
 // scripts/wait_for_db.cjs
-// Simple wait-for-Postgres loop for Docker startup dependency
 const { Client } = require('pg');
 require('dotenv').config();
 
-const MAX_RETRIES = 30;
+const MAX_RETRIES = 40;
 const RETRY_DELAY_MS = 1000;
 
 const config = {
@@ -14,22 +13,28 @@ const config = {
   database: process.env.POSTGRES_DB,
 };
 
-async function wait() {
+async function waitForDb() {
+  console.log("Waiting for Postgres...");
+
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const client = new Client(config);
+
     try {
-      const client = new Client(config);
       await client.connect();
       await client.end();
-      console.log(`✅ Postgres is up (attempt ${attempt})`);
-      return;
+      console.log(`Postgres is ready (attempt ${attempt}).`);
+      return true;
     } catch (err) {
-      console.log(`⏳ Waiting for Postgres (attempt ${attempt}/${MAX_RETRIES}): ${err.message}`);
-      await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+      console.log(
+        `Postgres not ready yet (${attempt}/${MAX_RETRIES}): ${err.message}`
+      );
     }
+
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
   }
-  console.error(`❌ Postgres not ready after ${MAX_RETRIES} attempts`);
-  process.exit(1);
+
+  console.error("Postgres did not become ready in time.");
+  return false; // ← IMPORTANT: DO NOT THROW HERE
 }
 
-wait();
-
+module.exports = waitForDb;
