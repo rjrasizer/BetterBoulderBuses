@@ -1,54 +1,48 @@
 // //Allow for relative path usage
 // app.use(express.static(__dirname + '/'));
-
 // *****************************************************
-// <!-- Section 1 : Import Dependencies -->
+// Section 1 : Import Dependencies
 // *****************************************************
 
 require('dotenv').config();
-const express = require('express'); // To build an application server or API
-const app = express();
+const express = require('express');
+const app = express(); // <-- exportable Express app
 const handlebars = require('express-handlebars');
 const Handlebars = require('handlebars');
 const path = require('path');
-const pgp = require('pg-promise')(); // To connect to the Postgres DB from the node server
+const pgp = require('pg-promise')();
 const bodyParser = require('body-parser');
-const session = require('express-session'); // To set the session object. To store or access session data, use the `req.session`, which is (generally) serialized as JSON by the store.
-const bcrypt = require('bcryptjs'); //  To hash passwords
-const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
+const session = require('express-session');
+const bcrypt = require('bcryptjs');
+const axios = require('axios');
 
 // *****************************************************
-// <!-- Section 2 : Connect to DB -->
+// Section 2 : Connect to DB
 // *****************************************************
 
-// create `ExpressHandlebars` instance and configure the layouts and partials dir.
-
-// database configuration
 const dbConfig = {
-  host: process.env.POSTGRES_HOST, // the database server
-  port: 5432, // the database port
-  database: process.env.POSTGRES_DB, // the database name
-  user: process.env.POSTGRES_USER, // the user account to connect with
-  password: process.env.POSTGRES_PASSWORD, // the password of the user account
+  host: process.env.POSTGRES_HOST,
+  port: 5432,
+  database: process.env.POSTGRES_DB,
+  user: process.env.POSTGRES_USER,
+  password: process.env.POSTGRES_PASSWORD,
 };
 
 const db = pgp(dbConfig);
 
-// test your database
 db.connect()
   .then(obj => {
-    console.log('Database connection successful'); // you can view this message in the docker compose logs
-    obj.done(); // success, release the connection;
+    console.log('Database connection successful');
+    obj.done();
   })
   .catch(error => {
     console.log('ERROR:', error.message || error);
   });
 
 // *****************************************************
-// <!-- Section 3 : App Settings -->
+// Section 3 : App Settings
 // *****************************************************
 
-// Register `hbs` as our view engine using its bound `engine()` function.
 app.engine('hbs', 
     handlebars.engine({
         extname: 'hbs',
@@ -63,7 +57,7 @@ app.engine('hbs',
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 
-app.use(bodyParser.json()); // specify the usage of JSON for parsing request body.
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(
@@ -81,79 +75,7 @@ const auth = (req, res, next) => {
   next();
 };
 
-// ===== Change Password Logic =====
-app.post('/settings/change-password', auth, async (req, res) => {
-  const { currentPassword, newPassword, confirmPassword } = req.body;
-  const username = req.session.user.username;
-
-  try {
-    if (newPassword !== confirmPassword) {
-      return res.render('pages/settings', {
-        activeTab: "profile",
-        userData: { username },
-        message: "New passwords do not match",
-        error: true
-      });
-    }
-
-    // Get user from DB
-    const user = await db.oneOrNone(
-      'SELECT * FROM users WHERE username = $1',
-      [username]
-    );
-
-    if (!user) {
-      return res.redirect('/login');
-    }
-
-    // Check current password is correct
-    const match = await bcrypt.compare(currentPassword, user.password);
-    if (!match) {
-      return res.render('pages/settings', {
-        activeTab: "profile",
-        userData: { username },
-        message: "Current password is incorrect",
-        error: true
-      });
-    }
-
-    // Hash and update new password
-    const hashed = await bcrypt.hash(newPassword, 10);
-
-    await db.none(
-      'UPDATE users SET password = $1 WHERE username = $2',
-      [hashed, username]
-    );
-
-    res.render('pages/settings', {
-      activeTab: "profile",
-      userData: { username },
-      message: "Password updated successfully",
-      success: true
-    });
-
-  } catch (err) {
-    console.error('Password update error:', err);
-    res.render('pages/settings', {
-      activeTab: "profile",
-      userData: { username },
-      message: "Something went wrong",
-      error: true
-    });
-  }
-});
-
 app.use(express.static(path.join(__dirname, 'resources')));
-
-
-// initialize session variables
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    saveUninitialized: false,
-    resave: false,
-  })
-);
 
 // *****************************************************
 // <!-- Section 4 : API Routes -->
@@ -573,35 +495,32 @@ app.get('/logout', (req, res) => {
   });
 });
 
+// *****************************************************
+// Section 5 : Server Start + GTFS
+// *****************************************************
 
-const PORT = process.env.PORT || 3000;
+// Only start the server if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  const PORT = process.env.PORT || 3000;
+  const RUN_GTFS = process.env.RUN_GTFS === "true";
 
-// Start the server immediately
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-
-  // Async DB setup AFTER server is running
-  (async () => {
-    try {
-      console.log('Starting DB setup...');
-      await require('./scripts/wait_for_db.cjs')();
-      await require('./importGtfs.cjs')();
-      console.log('DB setup complete.');
-    } catch (e) {
-      console.error('DB setup failed:', e);
+  app.listen(PORT, async () => {
+    console.log(`Server running on port ${PORT}`);
+    if (RUN_GTFS) {
+      try {
+        console.log("Waiting for database...");
+        await import('./scripts/wait_for_db.cjs');
+        console.log("Running GTFS import...");
+        await import('./importGtfs.cjs');
+        console.log("GTFS import finished.");
+      } catch (err) {
+        console.error("GTFS setup failed:", err);
+      }
+    } else {
+      console.log("RUN_GTFS not enabled — skipping GTFS import.");
     }
-  })();
-});
+  });
+}
 
-
-//eq helper for settings page
-// import exphbs from "express-handlebars";
-
-// const hbs = exphbs.create({
-//   helpers: {
-//     eq: (a, b) => a === b,
-//   }
-// })
-
-// app.engine("hbs", hbs.engine);
-// app.set("view engine", "hbs");
+// Export app for testing
+module.exports = app;
