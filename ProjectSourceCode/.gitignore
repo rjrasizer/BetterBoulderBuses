@@ -4,3 +4,5 @@ package-lock.json
 *.zip
 *.db
 *.sqlite
+init_db.sh
+00_create.sql
