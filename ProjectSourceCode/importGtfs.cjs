@@ -124,9 +124,9 @@ async function runImport() {
     console.log('GTFS import complete.');
   } catch (err) {
     console.error('GTFS import failed:', err.message);
-  } finally {
-    pgp.end();
-  }
+  } // finally {
+    //     pgp.end(); // ❌ remove this
+    // }
 }
 
 runImport();

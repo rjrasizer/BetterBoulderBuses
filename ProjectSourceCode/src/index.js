@@ -509,9 +509,9 @@ if (process.env.NODE_ENV !== 'test') {
     if (RUN_GTFS) {
       try {
         console.log("Waiting for database...");
-        await import('./scripts/wait_for_db.cjs');
+        await import('../scripts/wait_for_db.cjs');
         console.log("Running GTFS import...");
-        await import('./importGtfs.cjs');
+        await import('../importGtfs.cjs');
         console.log("GTFS import finished.");
       } catch (err) {
         console.error("GTFS setup failed:", err);

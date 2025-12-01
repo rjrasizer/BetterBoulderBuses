@@ -32,7 +32,7 @@ services:
     volumes:
       - ./:/repository
     command: >
-      sh -c "npm run db:wait && npm run testandrun"
+      sh -c "npm run db:wait && npm start"
 
   test:
     image: node:lts
@@ -51,7 +51,7 @@ services:
     volumes:
       - ./:/repository
     command: >
-      sh -c "npm run db:wait && npm test"
+      sh -c "npm install && node src/index.js"
 
 volumes:
   group-project:
