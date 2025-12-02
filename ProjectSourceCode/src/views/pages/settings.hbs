@@ -36,11 +36,7 @@
 
       <h3 class="settings-title">Manage Account</h3>
 
-      {{#if message}}
-        <div class="alert {{#if error}}alert-danger{{else}}alert-success{{/if}}">
-          {{message}}
-        </div>
-      {{/if}}
+
 
       <form method="POST" action="/settings/profile/update" class="mb-4">
 
@@ -82,7 +78,11 @@
       </form>
 
       <div class="section-divider"></div>
-
+      {{#if message}}
+        <div class="alert {{#if error}}alert-danger{{else}}alert-success{{/if}}">
+          {{message}}
+        </div>
+      {{/if}}
       <h5 class="settings-subtitle">Change Password</h5>
 
       <form method="POST" action="/settings/change-password">

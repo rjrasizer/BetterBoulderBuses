@@ -880,14 +880,79 @@ app.get('/settings', auth, (req, res) => {
   const activeTab = req.query.tab || "profile";
 
   const userData = {
-    username: req.body.username,
-    name: "",
-    email: "",
-    avatar: "",
-  }
+    username: req.session.user.username,
+    name: req.session.user.name || "",
+    email: req.session.user.email || ""
+  };
 
-  res.render('pages/settings', { userData, activeTab, title: "Settings" });
+  const message = req.query.msg || null;
+  const error = req.query.error === "true";
+
+  res.render('pages/settings', { 
+    userData, 
+    activeTab, 
+    message, 
+    error, 
+    title: "Settings" 
+  });
 });
+
+app.post('/settings/profile/update', auth, async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    const username = req.session.user.username;
+
+    await db.none(
+      `UPDATE users SET name=$1, email=$2 WHERE username=$3`,
+      [name, email, username]
+    );
+
+    // Update session values
+    req.session.user.name = name;
+    req.session.user.email = email;
+
+    return res.redirect('/settings?tab=profile&msg=Profile updated successfully!');
+  } catch (err) {
+    console.error(err);
+    return res.redirect('/settings?tab=profile&error=true&msg=Failed to update profile.');
+  }
+});
+
+app.post('/settings/change-password', auth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const username = req.session.user.username;
+
+    const user = await db.one(
+      "SELECT * FROM users WHERE username=$1",
+      [username]
+    );
+
+    // Check current password
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      return res.redirect('/settings?tab=profile&error=true&msg=Current password is incorrect');
+    }
+
+    // Check match
+    if (newPassword !== confirmPassword) {
+      return res.redirect('/settings?tab=profile&error=true&msg=Passwords do not match');
+    }
+
+    // Update password
+    const hash = await bcrypt.hash(newPassword, 10);
+    await db.none(
+      "UPDATE users SET password=$1 WHERE username=$2",
+      [hash, username]
+    );
+
+    return res.redirect('/settings?tab=profile&msg=Password updated successfully!');
+  } catch (err) {
+    console.error(err);
+    return res.redirect('/settings?tab=profile&error=true&msg=Failed to update password');
+  }
+});
+
 
 app.get('/logout', (req, res) => {
   if(!req.session.user) return res.redirect('/login');
