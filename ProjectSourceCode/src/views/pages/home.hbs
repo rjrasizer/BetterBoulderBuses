@@ -177,15 +177,6 @@
   {{#if title}}<div>{{title}}</div>{{/if}}
   <div style="font-size: 12px; color: #666;">/home</div>
   <div id="diag" style="font-size:12px;color:#666;max-width:320px;word-break:break-all"></div>
-  <!-- MVP: Simple routes list -->
-  <div id="routesPanel"
-    style="margin-top:8px;max-height:220px;overflow:auto;border:1px solid #ddd;border-radius:6px;padding:6px;background:#fff;min-width:260px;">
-    <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
-      <span>Routes</span>
-      <span id="routesCount" style="font-size:12px;color:#666;"></span>
-    </div>
-    <ul id="routeList" style="list-style:none;padding:0;margin:0;font-size:13px;line-height:1.4;"></ul>
-  </div>
 </div>
 
 <div id="settings-btn">
@@ -231,11 +222,10 @@
 
   <div class="sidebar-header">
     <h2 class="sidebar-title">Routes</h2>
+    <span id="routesCount" style="font-size:14px;color:#cfb87c;margin-left:0.5rem;"></span>
   </div>
   <div class="sidebar-scroll-container">
-    <ul class="sidebar-route-list" id="sidebarRouteList">
-      {{!-- will have sidebar data entries here --}}
-    </ul>
+    <ul class="sidebar-route-list" id="routeList"></ul>
   </div>
 </div>
 
@@ -679,7 +669,7 @@
           });
         }
 
-        // --- Routes list (MVP) ---
+        // --- Routes list: all routes sorted by distance ---
         var state = { currentRouteId: 'FF1', currentDir: 0 };
         function selectRoute(routeId) {
           // Get available directions; pick the first
@@ -692,24 +682,108 @@
             .catch(function (err) { console.error('directions error', err); setStatus('directions error: ' + err.message, 'status-warn'); });
         }
         function loadRoutesList() {
-          fetchJSON('/api/routes')
-            .then(function (routes) {
-              var ul = document.getElementById('routeList');
-              var countEl = document.getElementById('routesCount');
+          var ul = document.getElementById('routeList');
+          var countEl = document.getElementById('routesCount');
+
+          var url = '/api/routes/nearby';
+          if (window.userLocation && window.userLocation.hasFix) {
+            url += '?lat=' + encodeURIComponent(window.userLocation.lat) +
+              '&lng=' + encodeURIComponent(window.userLocation.lng);
+          }
+
+          fetchJSON(url)
+            .then(function (payload) {
+              var routes = payload.routes || [];
               if (countEl) countEl.textContent = '(' + routes.length + ')';
               ul.innerHTML = '';
-              routes.slice(0, 40).forEach(function (r) {
+
+              routes.forEach(function (r) {
+                var routeId = r.route_id;
+                var directionId = typeof r.direction_id === 'number' ? r.direction_id : 0;
+                var nearestStop = r.nearest_stop || null;
+
                 var li = document.createElement('li');
-                var btn = document.createElement('button');
-                btn.type = 'button';
-                btn.textContent = (r.route_short_name || r.route_id) + ' — ' + (r.route_long_name || '');
-                btn.style.cssText = 'display:block;width:100%;text-align:left;padding:4px 6px;margin:2px 0;border:1px solid #ddd;border-radius:4px;background:#f8f9fa;cursor:pointer;';
-                btn.addEventListener('click', function () { selectRoute(r.route_id); });
-                li.appendChild(btn);
+                li.style.marginBottom = '6px';
+
+                var container = document.createElement('div');
+                container.style.display = 'flex';
+                container.style.flexDirection = 'column';
+                container.style.gap = '4px';
+
+                // Route title button (loads route shape/stops)
+                var titleBtn = document.createElement('button');
+                titleBtn.type = 'button';
+                titleBtn.textContent = (r.route_short_name || routeId) + ' — ' + (r.route_long_name || '');
+                titleBtn.style.cssText = 'display:block;width:100%;text-align:left;padding:4px 6px;border:1px solid #ddd;border-radius:4px;background:#f8f9fa;cursor:pointer;';
+                titleBtn.addEventListener('click', function () {
+                  state.currentRouteId = routeId;
+                  state.currentDir = directionId;
+                  loadRoute(map, routeId, directionId);
+                });
+
+                // Meta row with nearest stop + button
+                var metaRow = document.createElement('div');
+                metaRow.style.display = 'flex';
+                metaRow.style.justifyContent = 'space-between';
+                metaRow.style.alignItems = 'center';
+                metaRow.style.fontSize = '12px';
+
+                var infoSpan = document.createElement('span');
+                if (nearestStop) {
+                  var dist = typeof nearestStop.distance_meters === 'number'
+                    ? Math.round(nearestStop.distance_meters)
+                    : null;
+                  var infoText = 'Nearest: ' + (nearestStop.stop_name || nearestStop.stop_id || '');
+                  if (dist !== null) infoText += ' (~' + dist + ' m)';
+                  infoSpan.textContent = infoText;
+                } else {
+                  infoSpan.textContent = 'Nearest stop: unknown';
+                }
+
+                var closestBtn = document.createElement('button');
+                closestBtn.type = 'button';
+                closestBtn.textContent = 'Closest stop';
+                closestBtn.style.cssText = 'margin-left:8px;padding:4px 8px;border-radius:999px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:12px;';
+                closestBtn.addEventListener('click', function () {
+                  if (!window.userLocation || !window.userLocation.hasFix) {
+                    setStatus('Need your location for walking directions.', 'status-warn');
+                    return;
+                  }
+                  if (!nearestStop) {
+                    setStatus('No nearest stop data for this route.', 'status-warn');
+                    return;
+                  }
+
+                  window.nearestStop = {
+                    stop_id: nearestStop.stop_id,
+                    stop_name: nearestStop.stop_name,
+                    lat: nearestStop.lat,
+                    lon: nearestStop.lon
+                  };
+                  window.nearestRoute = {
+                    routeId: routeId,
+                    directionId: directionId
+                  };
+
+                  state.currentRouteId = routeId;
+                  state.currentDir = directionId;
+                  loadRoute(map, routeId, directionId);
+                  highlightNearestStopOnMap(map, window.nearestStop);
+                  showWalkingRoute(map);
+                });
+
+                metaRow.appendChild(infoSpan);
+                metaRow.appendChild(closestBtn);
+
+                container.appendChild(titleBtn);
+                container.appendChild(metaRow);
+                li.appendChild(container);
                 ul.appendChild(li);
               });
             })
-            .catch(function (err) { console.error('loadRoutesList error', err); });
+            .catch(function (err) {
+              console.error('loadRoutesList error', err);
+            });
         }
 
         // Draw a real GTFS route without adding any extra HTML
