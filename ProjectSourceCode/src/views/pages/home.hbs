@@ -126,6 +126,42 @@
     background: #ffffff;
   }
 
+  #nearest-btn {
+    position: fixed;
+    top: 112px;
+    right: 16px;
+    z-index: 10;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  #nearest-btn:hover {
+    background: #ffffff;
+  }
+
+  #walk-btn {
+    position: fixed;
+    top: 156px;
+    right: 16px;
+    z-index: 10;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  #walk-btn:hover {
+    background: #ffffff;
+  }
+
 
 </style>
 
@@ -164,6 +200,22 @@
   aria-label="Center on my location"
 >
   Center on me
+</button>
+
+<button
+  id="nearest-btn"
+  type="button"
+  aria-label="Find nearest route and stop"
+>
+  Nearest stop
+</button>
+
+<button
+  id="walk-btn"
+  type="button"
+  aria-label="Show walking route to nearest stop"
+>
+  Walk to stop
 </button>
 
 <div id="map" role="region" aria-label="Interactive transit map"></div>
@@ -293,6 +345,13 @@
             const userLng = position.coords.longitude;
             const userLat = position.coords.latitude;
 
+            // Track latest user location for nearest-stop logic
+            window.userLocation = {
+              lat: userLat,
+              lng: userLng,
+              hasFix: true
+            };
+
             // If marker doesn't exist yet, create it
             if (!window.userMarker) {
               window.userMarker = new mapboxgl.Marker({
@@ -311,6 +370,7 @@
 
           (error) => {
             console.error("Geolocation error:", error.message);
+            window.userLocation = { hasFix: false };
           },
 
           {
@@ -340,6 +400,13 @@
               function (position) {
                 var userLng = position.coords.longitude;
                 var userLat = position.coords.latitude;
+
+                // Update cached user location
+                window.userLocation = {
+                  lat: userLat,
+                  lng: userLng,
+                  hasFix: true
+                };
 
                 if (!window.userMarker) {
                   window.userMarker = new mapboxgl.Marker({
@@ -439,6 +506,177 @@
           updateEstimate(map, routeId, directionId);
           // poll roughly every 25 seconds
           estimateTimer = setInterval(function () { updateEstimate(map, routeId, directionId); }, 25000);
+        }
+
+        // --- Nearest route + stop to user ---
+        function highlightNearestStopOnMap(map, stop) {
+          var sourceId = 'nearest-stop';
+          var layerId = 'nearest-stop-circle';
+          var fc = {
+            type: 'FeatureCollection',
+            features: [{
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'Point',
+                coordinates: [stop.lon, stop.lat]
+              }
+            }]
+          };
+
+          if (map.getSource(sourceId)) {
+            map.getSource(sourceId).setData(fc);
+          } else {
+            map.addSource(sourceId, {
+              type: 'geojson',
+              data: fc
+            });
+          }
+
+          if (!map.getLayer(layerId)) {
+            map.addLayer({
+              id: layerId,
+              type: 'circle',
+              source: sourceId,
+              paint: {
+                'circle-radius': 8,
+                'circle-color': '#22c55e',
+                'circle-stroke-color': '#ffffff',
+                'circle-stroke-width': 2
+              }
+            });
+          }
+        }
+
+        function findNearestRouteStop(map) {
+          if (!window.userLocation || !window.userLocation.hasFix) {
+            setStatus('Waiting for your location…', 'status-warn');
+            return;
+          }
+
+          var lat = window.userLocation.lat;
+          var lng = window.userLocation.lng;
+
+          fetchJSON('/api/nearest?lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng))
+            .then(function (data) {
+              window.nearestStop = data.stop;
+              window.nearestRoute = {
+                routeId: data.route_id,
+                directionId: data.direction_id
+              };
+
+              var label = (data.route_short_name || data.route_id) + ' — ' + (data.stop.stop_name || '');
+              var dist = typeof data.distance_meters === 'number'
+                ? Math.round(data.distance_meters)
+                : null;
+              var statusText = 'Nearest: ' + label;
+              if (dist !== null) statusText += ' (~' + dist + ' m)';
+              setStatus(statusText, 'status-info');
+
+              loadRoute(map, data.route_id, data.direction_id);
+              highlightNearestStopOnMap(map, data.stop);
+            })
+            .catch(function (err) {
+              console.error('nearest error', err);
+              setStatus('Failed to find nearest stop', 'status-warn');
+            });
+        }
+
+        function buildDirectionsUrl(fromLng, fromLat, toLng, toLat) {
+          var token = tokenFromServer;
+          var coords = fromLng + ',' + fromLat + ';' + toLng + ',' + toLat;
+          return 'https://api.mapbox.com/directions/v5/mapbox/walking/'
+            + coords
+            + '?geometries=geojson&overview=full&access_token=' + encodeURIComponent(token);
+        }
+
+        function showWalkingRoute(map) {
+          if (!window.userLocation || !window.userLocation.hasFix || !window.nearestStop) {
+            setStatus('Need your location and nearest stop first.', 'status-warn');
+            return;
+          }
+
+          var fromLat = window.userLocation.lat;
+          var fromLng = window.userLocation.lng;
+          var toLat = window.nearestStop.lat;
+          var toLng = window.nearestStop.lon;
+
+          var url = buildDirectionsUrl(fromLng, fromLat, toLng, toLat);
+
+          fetch(url)
+            .then(function (r) {
+              if (!r.ok) throw new Error('HTTP ' + r.status);
+              return r.json();
+            })
+            .then(function (json) {
+              if (!json.routes || !json.routes.length || !json.routes[0].geometry) {
+                setStatus('No walking route found.', 'status-warn');
+                return;
+              }
+
+              var route = json.routes[0];
+              var geometry = route.geometry;
+              var sourceId = 'walking-route';
+              var layerId = 'walking-route-line';
+              var feature = {
+                type: 'Feature',
+                properties: {},
+                geometry: geometry
+              };
+
+              if (map.getSource(sourceId)) {
+                map.getSource(sourceId).setData(feature);
+              } else {
+                map.addSource(sourceId, {
+                  type: 'geojson',
+                  data: feature
+                });
+              }
+
+              if (!map.getLayer(layerId)) {
+                map.addLayer({
+                  id: layerId,
+                  type: 'line',
+                  source: sourceId,
+                  paint: {
+                    'line-color': '#22c55e',
+                    'line-width': 4,
+                    'line-dasharray': [1.5, 1.5]
+                  }
+                });
+              }
+
+              try {
+                var bounds = new mapboxgl.LngLatBounds();
+                geometry.coordinates.forEach(function (c) { bounds.extend(c); });
+                map.fitBounds(bounds, { padding: 60 });
+              } catch (e) {
+                console.warn('walk fit failed', e);
+              }
+
+              var dist = typeof route.distance === 'number' ? Math.round(route.distance) : null;
+              var statusText = 'Walking route ready';
+              if (dist !== null) statusText += ' (~' + dist + ' m)';
+              setStatus(statusText, 'status-info');
+            })
+            .catch(function (err) {
+              console.error('directions error', err);
+              setStatus('Failed to load walking route', 'status-warn');
+            });
+        }
+
+        var nearestBtn = document.getElementById('nearest-btn');
+        if (nearestBtn) {
+          nearestBtn.addEventListener('click', function () {
+            findNearestRouteStop(map);
+          });
+        }
+
+        var walkBtn = document.getElementById('walk-btn');
+        if (walkBtn) {
+          walkBtn.addEventListener('click', function () {
+            showWalkingRoute(map);
+          });
         }
 
         // --- Routes list (MVP) ---
