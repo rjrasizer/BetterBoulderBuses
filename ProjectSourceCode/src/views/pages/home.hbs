@@ -106,9 +106,6 @@
   #settings-btn:hover i {
     animation: spin-gear 0.8s linear infinite;
   }
-
-
-  
 </style>
 
 <link rel="stylesheet" href="/css/sidebar.css" />
@@ -412,6 +409,26 @@
         console.error('Mapbox GL error:', e && e.error ? e.error : e);
         setStatus('Map error: ' + (e && e.error && e.error.message ? e.error.message : 'see console'), 'status-warn');
       });
+
+      function renderSidebarRoutes(routes) {
+        const list = document.getElementById("sidebarRouteList");
+        list.innerHTML = "";  // Clear previous items
+
+        routes.forEach(r => {
+          const li = document.createElement("li");
+          li.classList.add("sidebar-route-item");
+          li.textContent = `${r.route_id}: ${r.route_long_name}`;
+          list.appendChild(li);
+        });
+      }
+
+      fetch('/api/routes')
+        .then(res => res.json())
+        .then(routes => {
+          renderSidebarRoutes(routes);
+        })
+        .catch(err => console.error("Failed to load routes:", err));
+
     }
 
     function initMapLibre() {
