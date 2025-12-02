@@ -162,6 +162,90 @@
     background: #ffffff;
   }
 
+  .route-details {
+    margin-top: 6px;
+    padding: 8px;
+    border-radius: 8px;
+    background: #222;
+    color: #fff;
+  }
+
+  .closest-stop-box {
+    padding: 8px;
+    border-radius: 8px;
+    background: #333;
+    margin-bottom: 8px;
+  }
+
+  .closest-stop-name {
+    font-size: 14px;
+    color: #cfb87c;
+    margin-bottom: 4px;
+  }
+
+  .closest-stop-eta {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .closest-stop-meta {
+    font-size: 12px;
+    color: #aaa;
+  }
+
+  .stops-scroll-container {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 4px 0;
+    margin-bottom: 8px;
+  }
+
+  .stop-card {
+    min-width: 140px;
+    padding: 8px;
+    border-radius: 8px;
+    background: #333;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .stop-card-name {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .stop-card-eta {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .stop-card-past {
+    opacity: 0.6;
+  }
+
+  .stop-card-nearest {
+    border: 1px solid #cfb87c;
+  }
+
+  .closest-stop-menu-button {
+    margin-top: 4px;
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 999px;
+    border: 1px solid #cfb87c;
+    background: #222;
+    color: #cfb87c;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
 
 </style>
 
@@ -498,6 +582,176 @@
           estimateTimer = setInterval(function () { updateEstimate(map, routeId, directionId); }, 25000);
         }
 
+        // --- Route details panel state ---
+        var openRouteKey = null;                // e.g., "FF1:0"
+        var routeDetailsMap = Object.create(null); // key -> details element
+
+        function renderRouteDetails(detailsEl, data, routeId, directionId, map) {
+          detailsEl.innerHTML = '';
+
+          var closest = data.nearest_stop || null;
+          var trip = data.trip || null;
+
+          // Closest stop summary box
+          var closestBox = document.createElement('div');
+          closestBox.className = 'closest-stop-box';
+
+          var closestName = document.createElement('div');
+          closestName.className = 'closest-stop-name';
+          closestName.textContent = closest && closest.stop_name ? closest.stop_name : 'Closest stop';
+
+          var closestEta = document.createElement('div');
+          closestEta.className = 'closest-stop-eta';
+          closestEta.textContent = closest && closest.eta_label ? closest.eta_label : 'ETA unknown';
+
+          var closestMeta = document.createElement('div');
+          closestMeta.className = 'closest-stop-meta';
+          if (trip && trip.now_local) {
+            closestMeta.textContent = 'Based on active service at ' + trip.now_local;
+          } else {
+            closestMeta.textContent = 'No active trip; schedule only';
+          }
+
+          closestBox.appendChild(closestName);
+          closestBox.appendChild(closestEta);
+          closestBox.appendChild(closestMeta);
+          detailsEl.appendChild(closestBox);
+
+          // Horizontal scroll of stops with ETAs
+          var stops = Array.isArray(data.stops) ? data.stops : [];
+          var scroll = document.createElement('div');
+          scroll.className = 'stops-scroll-container';
+
+          stops.forEach(function (stop) {
+            var card = document.createElement('div');
+            card.className = 'stop-card';
+            if (stop.is_passed) card.classList.add('stop-card-past');
+            if (stop.is_nearest) card.classList.add('stop-card-nearest');
+
+            var nameEl = document.createElement('div');
+            nameEl.className = 'stop-card-name';
+            nameEl.textContent = stop.stop_name || stop.stop_id || 'Stop';
+
+            var etaEl = document.createElement('div');
+            etaEl.className = 'stop-card-eta';
+            etaEl.textContent = stop.eta_label || 'ETA ?';
+
+            card.appendChild(nameEl);
+            card.appendChild(etaEl);
+
+            card.addEventListener('click', function () {
+              if (!window.userLocation || !window.userLocation.hasFix) {
+                setStatus('Need your location for walking directions.', 'status-warn');
+                return;
+              }
+
+              window.nearestStop = {
+                stop_id: stop.stop_id,
+                stop_name: stop.stop_name,
+                lat: stop.lat,
+                lon: stop.lon
+              };
+              window.nearestRoute = {
+                routeId: routeId,
+                directionId: directionId
+              };
+
+              state.currentRouteId = routeId;
+              state.currentDir = directionId;
+              loadRoute(map, routeId, directionId);
+              highlightNearestStopOnMap(map, window.nearestStop);
+              showWalkingRoute(map);
+            });
+
+            scroll.appendChild(card);
+          });
+
+          detailsEl.appendChild(scroll);
+
+          // Walk to closest stop button
+          var closestBtn = document.createElement('button');
+          closestBtn.type = 'button';
+          closestBtn.className = 'closest-stop-menu-button';
+          closestBtn.textContent = 'Walk to closest stop';
+
+          closestBtn.addEventListener('click', function () {
+            if (!window.userLocation || !window.userLocation.hasFix) {
+              setStatus('Need your location for walking directions.', 'status-warn');
+              return;
+            }
+            if (!closest) {
+              setStatus('No closest stop data.', 'status-warn');
+              return;
+            }
+
+            window.nearestStop = {
+              stop_id: closest.stop_id,
+              stop_name: closest.stop_name,
+              lat: closest.lat,
+              lon: closest.lon
+            };
+            window.nearestRoute = {
+              routeId: routeId,
+              directionId: directionId
+            };
+
+            state.currentRouteId = routeId;
+            state.currentDir = directionId;
+            loadRoute(map, routeId, directionId);
+            highlightNearestStopOnMap(map, window.nearestStop);
+            showWalkingRoute(map);
+          });
+
+          detailsEl.appendChild(closestBtn);
+        }
+
+        function openRouteDetails(routeId, directionId, detailsEl, map) {
+          var key = routeId + ':' + directionId;
+
+          // Collapse if already open
+          if (openRouteKey === key) {
+            var isHidden = detailsEl.style.display === 'none';
+            detailsEl.style.display = isHidden ? 'block' : 'none';
+            if (!isHidden) openRouteKey = null;
+            return;
+          }
+
+          // Close previously open panel
+          if (openRouteKey && routeDetailsMap[openRouteKey]) {
+            routeDetailsMap[openRouteKey].style.display = 'none';
+          }
+
+          openRouteKey = key;
+
+          if (detailsEl.dataset.loaded === 'true') {
+            detailsEl.style.display = 'block';
+            return;
+          }
+
+          var lat = null, lng = null;
+          if (window.userLocation && window.userLocation.hasFix) {
+            lat = window.userLocation.lat;
+            lng = window.userLocation.lng;
+          }
+
+          var url = '/api/routes/' + encodeURIComponent(routeId) +
+                    '/timing?direction_id=' + encodeURIComponent(directionId);
+          if (lat != null && lng != null) {
+            url += '&lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng);
+          }
+
+          fetchJSON(url)
+            .then(function (data) {
+              renderRouteDetails(detailsEl, data, routeId, directionId, map);
+              detailsEl.dataset.loaded = 'true';
+              detailsEl.style.display = 'block';
+            })
+            .catch(function (err) {
+              console.error('timing error', err);
+              setStatus('Failed to load route timing', 'status-warn');
+            });
+        }
+
         // --- Nearest route + stop to user ---
         function highlightNearestStopOnMap(map, stop) {
           var sourceId = 'nearest-stop';
@@ -710,16 +964,11 @@
                 container.style.flexDirection = 'column';
                 container.style.gap = '4px';
 
-                // Route title button (loads route shape/stops)
+                // Route title button (loads route shape/stops and toggles details)
                 var titleBtn = document.createElement('button');
                 titleBtn.type = 'button';
                 titleBtn.textContent = (r.route_short_name || routeId) + ' — ' + (r.route_long_name || '');
                 titleBtn.style.cssText = 'display:block;width:100%;text-align:left;padding:4px 6px;border:1px solid #ddd;border-radius:4px;background:#f8f9fa;cursor:pointer;';
-                titleBtn.addEventListener('click', function () {
-                  state.currentRouteId = routeId;
-                  state.currentDir = directionId;
-                  loadRoute(map, routeId, directionId);
-                });
 
                 // Meta row with nearest stop + button
                 var metaRow = document.createElement('div');
@@ -775,8 +1024,23 @@
                 metaRow.appendChild(infoSpan);
                 metaRow.appendChild(closestBtn);
 
+                // Details panel (collapsible)
+                var details = document.createElement('div');
+                details.className = 'route-details';
+                details.style.display = 'none';
+                var routeKey = routeId + ':' + directionId;
+                routeDetailsMap[routeKey] = details;
+
+                titleBtn.addEventListener('click', function () {
+                  state.currentRouteId = routeId;
+                  state.currentDir = directionId;
+                  loadRoute(map, routeId, directionId);
+                  openRouteDetails(routeId, directionId, details, map);
+                });
+
                 container.appendChild(titleBtn);
                 container.appendChild(metaRow);
+                container.appendChild(details);
                 li.appendChild(container);
                 ul.appendChild(li);
               });
