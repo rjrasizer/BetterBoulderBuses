@@ -107,6 +107,10 @@
     animation: spin-gear 0.8s linear infinite;
   }
 
+  #recenter-btn i {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
 
   #recenter-btn {
     position: fixed;
@@ -146,7 +150,7 @@
 
   #walk-btn {
     position: fixed;
-    top: 156px;
+    top: 150px;
     right: 16px;
     z-index: 10;
     padding: 8px 12px;
@@ -155,12 +159,40 @@
     background: rgba(255, 255, 255, 0.9);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 14px;
   }
 
   #walk-btn:hover {
     background: #ffffff;
   }
+
+  #walk-btn i {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+
+  .action-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  margin: 4px; /* optional spacing between buttons */
+}
+
+.action-btn i {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
 
 
 </style>
@@ -190,7 +222,7 @@
   type="button"
   aria-label="Center on my location"
 >
-  Center on me
+  <i class="bi bi-geo-alt"></i>
 </button>
 
 <button
@@ -206,7 +238,7 @@
   type="button"
   aria-label="Show walking route to nearest stop"
 >
-  Walk to stop
+  <i class="bi bi-person"></i>
 </button>
 
 <div id="map" role="region" aria-label="Interactive transit map"></div>
