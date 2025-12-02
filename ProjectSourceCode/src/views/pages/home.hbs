@@ -108,7 +108,25 @@
   }
 
 
-  
+  #recenter-btn {
+    position: fixed;
+    top: 68px;
+    right: 16px;
+    z-index: 10;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  #recenter-btn:hover {
+    background: #ffffff;
+  }
+
+
 </style>
 
 <link rel="stylesheet" href="/css/sidebar.css" />
@@ -139,6 +157,15 @@
     <i class="bi bi-gear-fill"></i>
   </a>
 </div>
+
+<button
+  id="recenter-btn"
+  type="button"
+  aria-label="Center on my location"
+>
+  Center on me
+</button>
+
 <div id="map" role="region" aria-label="Interactive transit map"></div>
 
 <a href="/settings" class="position-fixed top-0 end-0 m-3 text-dark">
@@ -294,6 +321,49 @@
         );
       } else {
         console.error("Geolocation not supported by this browser.");
+      }
+
+      // Recenter-on-user button
+      var recenterBtn = document.getElementById('recenter-btn');
+      if (recenterBtn) {
+        recenterBtn.addEventListener('click', function () {
+          // If we already have a user marker, use its position
+          if (window.userMarker && typeof window.userMarker.getLngLat === 'function') {
+            var lngLat = window.userMarker.getLngLat();
+            map.flyTo({ center: [lngLat.lng, lngLat.lat], zoom: 14 });
+            return;
+          }
+
+          // Fallback: ask for current position once
+          if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+              function (position) {
+                var userLng = position.coords.longitude;
+                var userLat = position.coords.latitude;
+
+                if (!window.userMarker) {
+                  window.userMarker = new mapboxgl.Marker({
+                    color: "rgb(207, 184, 124)"
+                  })
+                    .setLngLat([userLng, userLat])
+                    .addTo(map);
+                } else {
+                  window.userMarker.setLngLat([userLng, userLat]);
+                }
+
+                map.flyTo({ center: [userLng, userLat], zoom: 14 });
+              },
+              function (error) {
+                console.error("Geolocation error (recenter):", error.message);
+              },
+              {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 10000
+              }
+            );
+          }
+        });
       }
 
       map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
