@@ -4,9 +4,7 @@
 https://betterboulderbuses.onrender.com/home
 
 ## Application Description
-Better Boulder Buses is a free, Boulder-based public transportation website that allows users to view bus routes, live locations of buses, and bus schedules, while also adding route planning ahead of time. Our application includes both a user-friendly computer and mobile interface that provides a clean, functional user experience. We also have an interactive map that updates available routes nearby for users based on their location.
-
-Our application includes a sign-in that allows users to mark if they are students, which will populate buses differently based on whether they get transportation for free. Otherwise, if not a student, our application will provide bus pricing and reroutes for purchasing tickets or passes. With an account, you can also favorite bus routes so that your most used bus routes populate at the top of the bus list first.
+Better Boulder Buses is a free, Boulder-based public transportation website that allows users to view bus routes, live locations of buses, all Colorado RTD bus schedules, closest bus stops and routes, and user live location services. Our application includes both a user-friendly computer and mobile interface that provides a clean, functional user experience. We also have an interactive map that updates available routes nearby for users based on their location.
 
 ---
 
@@ -20,10 +18,10 @@ Reed Shisler
 ---
 
 ## Technology Stack
-- Frontend: HTML, CSS, JavaScript (planned)  
-- Backend: Node.js / Express (planned)  
-- Database: To be determined (likely Firebase or PostgreSQL)  
-- Version Control: GitHub Classroom repository  
+- Frontend: HTML, CSS, JavaScript, Handlebars 
+- Backend: Node.js, Express, Shell Scripting
+- Database: PostgresQL  
+- Version Control: GitHub Repository  
 
 ---
 
@@ -33,15 +31,15 @@ Not implemented.
 ---
 
 ## Instructions to Run the Application Locally
-Not implemented.
+Commands: docker compose down -v (if already ran database)
+docker compose up -d
+docker compose exec web npm run db:prepare-gtfs (run it once for every fresh database)
 
 ---
 
 ## How to Run the Tests
-Not implemented.
-
----
+Tests will run on start when running application locally.
 
 ## Link to the Deployed Application
-Not implemented.
+https://betterboulderbuses.onrender.com/home
 
