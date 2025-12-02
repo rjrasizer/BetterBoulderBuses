@@ -1,18 +1,37 @@
 <div class="settings-page">
 
-  <!-- Top Navigation Tabs -->
-  <div class="settings-tabs">
-    <a href="/settings?tab=profile" class="{{#if (eq activeTab 'profile')}}active{{/if}}">Account</a>
-    <a href="/settings?tab=notifications" class="{{#if (eq activeTab 'notifications')}}active{{/if}}">Notifications</a>
-    <a href="/settings?tab=help" class="{{#if (eq activeTab 'help')}}active{{/if}}">Help</a>
-    <a href="/logout" class="logout-tab">Logout</a>
+  <!-- Header -->
+  <div class="settings-header">
+    <div class="settings-tabs">
+
+      <a href="/home" class="tab-btn back-btn">← Back</a>
+
+
+      <a href="/settings?tab=profile"
+         class="tab-btn {{#if (eq activeTab 'profile')}}active{{/if}}">
+        Account
+      </a>
+
+      <a href="/settings?tab=notifications"
+         class="tab-btn {{#if (eq activeTab 'notifications')}}active{{/if}}">
+        Notifications
+      </a>
+
+      <a href="/settings?tab=help"
+         class="tab-btn {{#if (eq activeTab 'help')}}active{{/if}}">
+        Help
+      </a>
+
+      <a href="/logout" class="tab-btn logout-btn">Logout</a>
+
+    </div>
   </div>
 
   <!-- Main Content -->
   <div class="settings-container">
     <div class="settings-card">
 
-      {{!-- ========== ACCOUNT / MANAGE PROFILE ========== --}}
+      {{!-- ========== ACCOUNT TAB ========== --}}
       {{#if (eq activeTab "profile")}}
 
       <h3 class="settings-title">Manage Account</h3>
@@ -106,7 +125,7 @@
 
       {{/if}}
 
-      {{!-- ========== NOTIFICATIONS ========== --}}
+      {{!-- ========== NOTIFICATIONS TAB ========== --}}
       {{#if (eq activeTab "notifications")}}
 
       <h3 class="settings-title">Notifications</h3>
@@ -137,7 +156,7 @@
 
       {{/if}}
 
-      {{!-- ========== HELP ========== --}}
+      {{!-- ========== HELP TAB ========== --}}
       {{#if (eq activeTab "help")}}
 
       <h3 class="settings-title">Help & Support</h3>
@@ -154,6 +173,7 @@
 
       {{/if}}
 
-    </div>
-  </div>
-</div>
+    </div> <!-- closes settings-card -->
+  </div> <!-- closes settings-container -->
+
+</div> <!-- closes settings-page -->
