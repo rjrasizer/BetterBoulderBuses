@@ -387,6 +387,227 @@ app.get('/api/nearest', async (req, res) => {
   }
 });
 
+// Route timing + per-stop ETAs for a specific route/direction
+app.get('/api/routes/:route_id/timing', async (req, res) => {
+  const routeId = req.params.route_id;
+  const qDir = req.query.direction_id;
+  const directionId = Number.isFinite(Number(qDir)) ? Number(qDir) : 0;
+
+  const qLat = parseFloat(req.query.lat);
+  const qLng = parseFloat(req.query.lng);
+
+  let lat = FALLBACK_LAT;
+  let lng = FALLBACK_LNG;
+  let source = 'fallback';
+
+  if (
+    Number.isFinite(qLat) && Number.isFinite(qLng) &&
+    qLat >= -90 && qLat <= 90 &&
+    qLng >= -180 && qLng <= 180
+  ) {
+    lat = qLat;
+    lng = qLng;
+    source = 'user';
+  }
+
+  const toRad = (x) => x * Math.PI / 180;
+  const R = 6371000; // meters
+
+  try {
+    // Route metadata
+    const routeMeta = await db.oneOrNone(
+      `
+        SELECT route_id, route_short_name, route_long_name
+        FROM routes
+        WHERE route_id = $1
+      `,
+      [routeId]
+    );
+
+    // Nearest stop for this route/direction relative to reference location
+    const nearest = await db.oneOrNone(
+      `
+        SELECT
+          stop_id,
+          stop_name,
+          lon,
+          lat,
+          stop_sequence,
+          ((lon - $1)^2 + (lat - $2)^2) AS dist2
+        FROM route_stops_ordered
+        WHERE route_id = $3
+          AND direction_id = $4
+        ORDER BY dist2
+        LIMIT 1
+      `,
+      [lng, lat, routeId, directionId]
+    );
+
+    if (!nearest) {
+      return res.status(404).json({ error: 'No stops for route/direction' });
+    }
+
+    const dLatNearest = toRad(nearest.lat - lat);
+    const dLngNearest = toRad(nearest.lon - lng);
+    const aNearest =
+      Math.sin(dLatNearest / 2) * Math.sin(dLatNearest / 2) +
+      Math.cos(toRad(lat)) * Math.cos(toRad(nearest.lat)) *
+      Math.sin(dLngNearest / 2) * Math.sin(dLngNearest / 2);
+    const cNearest = 2 * Math.atan2(Math.sqrt(aNearest), Math.sqrt(1 - aNearest));
+    const nearestDistanceMeters = R * cNearest;
+
+    // Current time in local Denver time
+    const { now_secs: nowSecs, now_local: nowLocal, today } = await db.one(
+      `
+        SELECT
+          (EXTRACT(EPOCH FROM (now() AT TIME ZONE 'America/Denver')::time))::int AS now_secs,
+          to_char((now() AT TIME ZONE 'America/Denver'), 'YYYY-MM-DD HH24:MI:SS') AS now_local,
+          (now() AT TIME ZONE 'America/Denver')::date AS today
+      `
+    );
+
+    // Active service_ids for today
+    const active = await db.any(
+      `SELECT service_id FROM service_dates WHERE service_date = $1 AND active = true`,
+      [today]
+    );
+    const serviceIds = active.map(r => r.service_id);
+
+    let tripMeta = null;
+    let stopsWithEta = [];
+    let nearestEtaSeconds = null;
+    let nearestEtaLabel = null;
+
+    if (serviceIds.length) {
+      // Trips for this route/direction that run today
+      const tripsToday = await db.any(
+        `SELECT trip_id
+         FROM trips
+         WHERE route_id = $1
+           AND COALESCE(NULLIF(direction_id,'')::int,0) = $2
+           AND service_id = ANY($3)`,
+        [routeId, directionId, serviceIds]
+      );
+
+      if (tripsToday.length) {
+        // Compute time spans for those trips
+        const spans = await db.any(
+          `SELECT st.trip_id,
+                  MIN(st.departure_secs)::int AS start_secs,
+                  MAX(st.departure_secs)::int AS end_secs
+           FROM stop_times st
+           WHERE st.trip_id = ANY($1)
+             AND st.departure_secs IS NOT NULL
+           GROUP BY st.trip_id`,
+          [tripsToday.map(t => t.trip_id)]
+        );
+
+        let chosen = null;
+        let inProgress = false;
+        if (spans.length) {
+          chosen = spans.find(s => s.start_secs <= nowSecs && s.end_secs >= nowSecs) || null;
+          if (chosen) {
+            inProgress = true;
+          } else {
+            const upcoming = spans
+              .filter(s => s.start_secs > nowSecs)
+              .sort((a, b) => a.start_secs - b.start_secs)[0];
+            chosen = upcoming || spans.sort((a, b) => a.start_secs - b.start_secs)[0];
+          }
+        }
+
+        if (chosen && chosen.trip_id) {
+          tripMeta = {
+            trip_id: chosen.trip_id,
+            now_secs: nowSecs,
+            now_local: nowLocal,
+            start_secs: chosen.start_secs,
+            end_secs: chosen.end_secs,
+            in_progress: inProgress,
+            service_ids_today: serviceIds
+          };
+
+          const stopRows = await db.any(
+            `SELECT sp.stop_id,
+                    sp.stop_name,
+                    sp.stop_lon::float AS lon,
+                    sp.stop_lat::float AS lat,
+                    COALESCE(NULLIF(st.stop_sequence,'')::int,0) AS stop_sequence,
+                    st.departure_secs
+             FROM stop_times st
+             JOIN stops sp ON sp.stop_id = st.stop_id
+             WHERE st.trip_id = $1
+               AND st.departure_secs IS NOT NULL
+             ORDER BY stop_sequence`,
+            [chosen.trip_id]
+          );
+
+          stopsWithEta = stopRows.map(row => {
+            const etaSeconds = row.departure_secs - nowSecs;
+            let etaLabel;
+            let isPassed = false;
+            if (etaSeconds <= -60) {
+              isPassed = true;
+              etaLabel = 'Departed';
+            } else if (etaSeconds < 0) {
+              etaLabel = 'Due';
+            } else {
+              const mins = Math.round(etaSeconds / 60);
+              etaLabel = mins + ' min';
+            }
+
+            return {
+              stop_id: row.stop_id,
+              stop_name: row.stop_name,
+              lat: row.lon ? row.lat : row.lat,
+              lon: row.lon,
+              stop_sequence: row.stop_sequence,
+              eta_seconds: etaSeconds,
+              eta_label: etaLabel,
+              is_passed: isPassed,
+              is_nearest: false
+            };
+          });
+
+          // Mark nearest stop in the list and capture its ETA
+          const idxNearest = stopsWithEta.findIndex(s => s.stop_id === nearest.stop_id);
+          if (idxNearest >= 0) {
+            stopsWithEta[idxNearest].is_nearest = true;
+            nearestEtaSeconds = stopsWithEta[idxNearest].eta_seconds;
+            nearestEtaLabel = stopsWithEta[idxNearest].eta_label;
+          }
+        }
+      }
+    }
+
+    return res.json({
+      route_id: routeId,
+      direction_id: directionId,
+      route_short_name: routeMeta ? routeMeta.route_short_name : null,
+      route_long_name: routeMeta ? routeMeta.route_long_name : null,
+      user_location: {
+        lat,
+        lng,
+        source
+      },
+      trip: tripMeta,
+      nearest_stop: {
+        stop_id: nearest.stop_id,
+        stop_name: nearest.stop_name,
+        lat: nearest.lat,
+        lon: nearest.lon,
+        distance_meters: nearestDistanceMeters,
+        eta_seconds: nearestEtaSeconds,
+        eta_label: nearestEtaLabel
+      },
+      stops: stopsWithEta
+    });
+  } catch (e) {
+    console.error('route timing api error', e);
+    res.status(500).json({ error: 'Failed to compute route timing' });
+  }
+});
+
 // Estimate current bus position (skeleton)
 app.get('/api/routes/:route_id/estimate', async (req, res) => {
   const routeId = req.params.route_id;
