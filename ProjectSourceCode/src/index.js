@@ -30,6 +30,10 @@ const dbConfig = {
 
 const db = pgp(dbConfig);
 
+// Fallback location (CU Boulder Engineering Center) when user location is not available
+const FALLBACK_LAT = 40.0063;
+const FALLBACK_LNG = -105.2620;
+
 db.connect()
   .then(obj => {
     console.log('Database connection successful');
@@ -111,6 +115,107 @@ app.get('/api/routes', async (req, res) => {
   } catch (e) {
     console.error('routes api error', e);
     res.status(500).json({ error: 'Failed to load routes' });
+  }
+});
+
+// All routes, sorted by distance to a given lat/lng (or fallback location)
+app.get('/api/routes/nearby', async (req, res) => {
+  const qLat = parseFloat(req.query.lat);
+  const qLng = parseFloat(req.query.lng);
+
+  let lat = FALLBACK_LAT;
+  let lng = FALLBACK_LNG;
+  let source = 'fallback';
+
+  if (
+    Number.isFinite(qLat) && Number.isFinite(qLng) &&
+    qLat >= -90 && qLat <= 90 &&
+    qLng >= -180 && qLng <= 180
+  ) {
+    lat = qLat;
+    lng = qLng;
+    source = 'user';
+  }
+
+  try {
+    const rows = await db.any(
+      `
+        WITH with_dist AS (
+          SELECT
+            rso.route_id,
+            rso.direction_id,
+            rso.stop_id,
+            rso.stop_name,
+            rso.lon,
+            rso.lat,
+            ((rso.lon - $1)^2 + (rso.lat - $2)^2) AS dist2,
+            ROW_NUMBER() OVER (
+              PARTITION BY rso.route_id
+              ORDER BY ((rso.lon - $1)^2 + (rso.lat - $2)^2)
+            ) AS rn
+          FROM route_stops_ordered rso
+        ),
+        routes_with_nearest AS (
+          SELECT
+            wd.route_id,
+            wd.direction_id,
+            wd.stop_id,
+            wd.stop_name,
+            wd.lon,
+            wd.lat,
+            wd.dist2,
+            r.route_short_name,
+            r.route_long_name
+          FROM with_dist wd
+          JOIN routes r ON r.route_id = wd.route_id
+          WHERE wd.rn = 1
+        )
+        SELECT *
+        FROM routes_with_nearest
+        ORDER BY dist2 ASC
+      `,
+      [lng, lat]
+    );
+
+    const toRad = (x) => x * Math.PI / 180;
+    const R = 6371000; // meters
+
+    const routes = rows.map((row) => {
+      const dLat = toRad(row.lat - lat);
+      const dLng = toRad(row.lon - lng);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat)) * Math.cos(toRad(row.lat)) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distanceMeters = R * c;
+
+      return {
+        route_id: row.route_id,
+        route_short_name: row.route_short_name,
+        route_long_name: row.route_long_name,
+        direction_id: row.direction_id,
+        nearest_stop: {
+          stop_id: row.stop_id,
+          stop_name: row.stop_name,
+          lat: row.lat,
+          lon: row.lon,
+          distance_meters: distanceMeters
+        }
+      };
+    });
+
+    return res.json({
+      location: {
+        lat,
+        lng,
+        source
+      },
+      routes
+    });
+  } catch (e) {
+    console.error('routes nearby api error', e);
+    res.status(500).json({ error: 'Failed to load nearby routes' });
   }
 });
 
