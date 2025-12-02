@@ -42,3 +42,9 @@
 
 **Action Items:**
 * **Release Notes:** Ensure Release Notes are completed and documented on GitHub.
+
+---
+
+## Meeting 4 – November 20, 2025
+**Key Discussions & Decisions:**
+* Discussed current state of project, what deliverables are for presentation date, and went over how to host on render properly and have the bus database load.
