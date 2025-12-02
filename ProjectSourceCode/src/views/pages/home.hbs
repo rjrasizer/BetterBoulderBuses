@@ -50,63 +50,65 @@
 
 
   #settings-btn {
- position: fixed;
- top: 16px;
- right: 16px;
- z-index: 10;
-}
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+  }
 
 
-#settings-btn a {
- display: flex;
- align-items: center;
- justify-content: center;
+  #settings-btn a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
 
- width: 42px;
- height: 42px;
+    width: 42px;
+    height: 42px;
 
 
- background: rgba(255, 255, 255, 0.9);
- border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
 
 
- box-shadow: 0 2px 8px rgba(0,0,0,0.15);
- backdrop-filter: blur(6px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(6px);
 
 
- text-decoration: none;
- color: #333;
- transition: background 0.2s ease, transform 0.2s ease;
-}
+    text-decoration: none;
+    color: #333;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
 
 
-#settings-btn i {
- font-size: 20px;
-}
+  #settings-btn i {
+    font-size: 20px;
+  }
 
 
-/* Continuous spin animation */
-@keyframes spin-gear {
- from {
-   transform: rotate(0deg);
- }
- to {
-   transform: rotate(360deg);
- }
-}
+  /* Continuous spin animation */
+  @keyframes spin-gear {
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
+  }
 
 
-#settings-btn:hover a {
- background: rgba(255, 255, 255, 1);
-}
+  #settings-btn:hover a {
+    background: rgba(255, 255, 255, 1);
+  }
 
 
-#settings-btn:hover i {
- animation: spin-gear 0.8s linear infinite;
-}
+  #settings-btn:hover i {
+    animation: spin-gear 0.8s linear infinite;
+  }
 
 
+  
 </style>
 
 <link rel="stylesheet" href="/css/sidebar.css" />
@@ -252,6 +254,48 @@
         center: [-105.2705, 40.0150],
         zoom: 12
       });
+
+      // -----------------------------
+      // USER LOCATION
+      // -----------------------------
+
+      // Make sure browser supports location
+      if ("geolocation" in navigator) {
+        navigator.geolocation.watchPosition(
+          (position) => {
+            const userLng = position.coords.longitude;
+            const userLat = position.coords.latitude;
+
+            // If marker doesn't exist yet, create it
+            if (!window.userMarker) {
+              window.userMarker = new mapboxgl.Marker({
+                color: "rgb(207, 184, 124)"  // optional: your chosen color
+              })
+                .setLngLat([userLng, userLat])
+                .addTo(map);
+
+              // Optionally center map on the user the first time
+              map.flyTo({ center: [userLng, userLat], zoom: 14 });
+            } else {
+              // Update existing marker
+              window.userMarker.setLngLat([userLng, userLat]);
+            }
+          },
+
+          (error) => {
+            console.error("Geolocation error:", error.message);
+          },
+
+          {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 10000
+          }
+        );
+      } else {
+        console.error("Geolocation not supported by this browser.");
+      }
+
       map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
       map.on('load', function () {
         setStatus('loaded', 'status-info');
