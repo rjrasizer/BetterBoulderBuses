@@ -204,6 +204,84 @@ app.get('/api/routes/:route_id/stops', async (req, res) => {
   }
 });
 
+// Nearest route + stop to a given lat/lng
+app.get('/api/nearest', async (req, res) => {
+  const lat = parseFloat(req.query.lat);
+  const lng = parseFloat(req.query.lng);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) ||
+      lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    return res.status(400).json({ error: 'Invalid or missing lat/lng query parameters' });
+  }
+
+  try {
+    // Find nearest stop across all routes/directions using a simple squared-distance metric
+    const nearest = await db.oneOrNone(
+      `
+        SELECT
+          rso.route_id,
+          rso.direction_id,
+          rso.stop_id,
+          rso.stop_name,
+          rso.lon,
+          rso.lat,
+          ((rso.lon - $1)^2 + (rso.lat - $2)^2) AS dist2
+        FROM route_stops_ordered rso
+        ORDER BY dist2
+        LIMIT 1
+      `,
+      [lng, lat]
+    );
+
+    if (!nearest) {
+      return res.status(404).json({ error: 'No stops found' });
+    }
+
+    // Optionally enrich with route metadata
+    const routeMeta = await db.oneOrNone(
+      `
+        SELECT route_id, route_short_name, route_long_name
+        FROM routes
+        WHERE route_id = $1
+      `,
+      [nearest.route_id]
+    );
+
+    // Compute approximate distance in meters using a simple haversine
+    const toRad = (x) => x * Math.PI / 180;
+    const R = 6371000; // meters
+    const dLat = toRad(nearest.lat - lat);
+    const dLng = toRad(nearest.lon - lng);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat)) * Math.cos(toRad(nearest.lat)) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distanceMeters = R * c;
+
+    return res.json({
+      route_id: nearest.route_id,
+      direction_id: nearest.direction_id,
+      route_short_name: routeMeta ? routeMeta.route_short_name : null,
+      route_long_name: routeMeta ? routeMeta.route_long_name : null,
+      distance_meters: distanceMeters,
+      stop: {
+        stop_id: nearest.stop_id,
+        stop_name: nearest.stop_name,
+        lat: nearest.lat,
+        lon: nearest.lon
+      },
+      query: {
+        lat,
+        lng
+      }
+    });
+  } catch (e) {
+    console.error('nearest api error', e);
+    res.status(500).json({ error: 'Failed to compute nearest stop' });
+  }
+});
+
 // Estimate current bus position (skeleton)
 app.get('/api/routes/:route_id/estimate', async (req, res) => {
   const routeId = req.params.route_id;
