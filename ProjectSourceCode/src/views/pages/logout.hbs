@@ -1,4 +1,21 @@
-<div class="container text-center mt-5">
-    {{> message}}
-    <a href="/login" class="btn btn-primary mt-3">Return to Login</a>
+<link rel="stylesheet" href="/css/logout.css">
+
+<div class="logout-wrapper">
+  <div class="logout-card">
+    
+    <h2>You've been logged out</h2>
+    <p class="logout-message">Your session ended successfully.</p>
+
+    <a href="/login" class="btn-primary">Log Back In</a>
+
+    <a href="/" class="logout-secondary">Return to Home</a>
+
+  </div>
 </div>
+
+<script>
+  // Auto-redirect after 2.5 seconds
+  setTimeout(() => {
+    window.location.href = "/login";
+  }, 2500);
+</script>
