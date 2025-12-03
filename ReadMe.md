@@ -31,8 +31,11 @@ Not implemented.
 ---
 
 ## Instructions to Run the Application Locally
+
 Commands: docker compose down -v (if already ran database)
+
 docker compose up -d
+
 docker compose exec web npm run db:prepare-gtfs (run it once for every fresh database)
 
 ---
