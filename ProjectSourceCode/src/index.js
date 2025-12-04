@@ -982,22 +982,37 @@ app.get('/logout', (req, res) => {
 // Only start the server if not in test mode
 if (process.env.NODE_ENV !== 'test') {
   const PORT = process.env.PORT || 3000;
-  const RUN_GTFS = process.env.RUN_GTFS === "true";
+  // Default to running the GTFS import/prep pipeline unless explicitly disabled.
+  // This makes hosted environments like Render "just work" as long as POSTGRES_*
+  // env vars and google_transit.zip are present.
+  const RUN_GTFS = process.env.RUN_GTFS === 'false' ? false : true;
 
   app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
     if (RUN_GTFS) {
       try {
         console.log("Waiting for database...");
-        await import('../scripts/wait_for_db.cjs');
-        console.log("Running GTFS import...");
+        const waitModule = await import('../scripts/wait_for_db.cjs');
+        const waitForDb = waitModule.default || waitModule;
+        const ready = await waitForDb();
+
+        if (!ready) {
+          console.error("Database did not become ready in time; skipping GTFS import/prep.");
+          return;
+        }
+
+        console.log("Running GTFS import (google_transit.zip -> raw GTFS tables)...");
         await import('../importGtfs.cjs');
         console.log("GTFS import finished.");
+
+        console.log("Preparing GTFS helper tables (service_dates, route_stops_ordered, etc.)...");
+        await import('../scripts/prepare_gtfs.cjs');
+        console.log("GTFS preparation finished.");
       } catch (err) {
         console.error("GTFS setup failed:", err);
       }
     } else {
-      console.log("RUN_GTFS not enabled — skipping GTFS import.");
+      console.log("RUN_GTFS explicitly disabled — skipping GTFS import and preparation.");
     }
   });
 }
