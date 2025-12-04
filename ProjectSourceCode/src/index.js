@@ -47,16 +47,16 @@ db.connect()
 // Section 3 : App Settings
 // *****************************************************
 
-app.engine('hbs', 
-    handlebars.engine({
-        extname: 'hbs',
-        layoutsDir: path.join(__dirname, 'views', 'layouts'),
-        partialsDir: path.join(__dirname, 'views', 'partials'),
-        defaultLayout: 'main',
-        helpers: {
-          eq: (a, b) => a === b,
-        }
-    })
+app.engine('hbs',
+  handlebars.engine({
+    extname: 'hbs',
+    layoutsDir: path.join(__dirname, 'views', 'layouts'),
+    partialsDir: path.join(__dirname, 'views', 'partials'),
+    defaultLayout: 'main',
+    helpers: {
+      eq: (a, b) => a === b,
+    }
+  })
 );
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
@@ -88,7 +88,7 @@ app.use(express.static(path.join(__dirname, 'resources')));
 // ------------ Authentication Middleware ----------
 
 app.get('/welcome', (req, res) => {
-  res.json({status: 'success', message: 'Welcome!'});
+  res.json({ status: 'success', message: 'Welcome!' });
 });
 
 // Authentication Required
@@ -261,7 +261,7 @@ app.get('/api/routes/:route_id/shape', async (req, res) => {
     if (!pts.length) return res.status(404).json({ error: 'Shape points missing for representative shape' });
 
     const coords = pts.map(p => [p.lng, p.lat]);
-    const fc = { type: 'FeatureCollection', features: [ { type: 'Feature', properties: { route_id: routeId, direction_id: directionId }, geometry: { type: 'LineString', coordinates: coords } } ] };
+    const fc = { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { route_id: routeId, direction_id: directionId }, geometry: { type: 'LineString', coordinates: coords } }] };
     res.json(fc);
   } catch (e) {
     console.error('shape api error', e);
@@ -315,7 +315,7 @@ app.get('/api/nearest', async (req, res) => {
   const lng = parseFloat(req.query.lng);
 
   if (!Number.isFinite(lat) || !Number.isFinite(lng) ||
-      lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     return res.status(400).json({ error: 'Invalid or missing lat/lng query parameters' });
   }
 
@@ -343,48 +343,49 @@ app.get('/api/nearest', async (req, res) => {
     }
 
     // Optionally enrich with route metadata
-    const routeMeta = await db.oneOrNone(
-      `
-        SELECT route_id, route_short_name, route_long_name
-        FROM routes
-        WHERE route_id = $1
-      `,
-      [nearest.route_id]
+    const routeRows = await db.any(`
+  SELECT route_id, route_short_name, route_long_name
+  FROM routes
+  WHERE route_id = $1
+  ORDER BY route_short_name LIMIT 1
+`, [routeId]);
+
+    const routeMeta = routeRows[0] || null;
     );
 
-    // Compute approximate distance in meters using a simple haversine
-    const toRad = (x) => x * Math.PI / 180;
-    const R = 6371000; // meters
-    const dLat = toRad(nearest.lat - lat);
-    const dLng = toRad(nearest.lon - lng);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat)) * Math.cos(toRad(nearest.lat)) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distanceMeters = R * c;
+// Compute approximate distance in meters using a simple haversine
+const toRad = (x) => x * Math.PI / 180;
+const R = 6371000; // meters
+const dLat = toRad(nearest.lat - lat);
+const dLng = toRad(nearest.lon - lng);
+const a =
+  Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+  Math.cos(toRad(lat)) * Math.cos(toRad(nearest.lat)) *
+  Math.sin(dLng / 2) * Math.sin(dLng / 2);
+const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+const distanceMeters = R * c;
 
-    return res.json({
-      route_id: nearest.route_id,
-      direction_id: nearest.direction_id,
-      route_short_name: routeMeta ? routeMeta.route_short_name : null,
-      route_long_name: routeMeta ? routeMeta.route_long_name : null,
-      distance_meters: distanceMeters,
-      stop: {
-        stop_id: nearest.stop_id,
-        stop_name: nearest.stop_name,
-        lat: nearest.lat,
-        lon: nearest.lon
-      },
-      query: {
-        lat,
-        lng
-      }
-    });
-  } catch (e) {
-    console.error('nearest api error', e);
-    res.status(500).json({ error: 'Failed to compute nearest stop' });
+return res.json({
+  route_id: nearest.route_id,
+  direction_id: nearest.direction_id,
+  route_short_name: routeMeta ? routeMeta.route_short_name : null,
+  route_long_name: routeMeta ? routeMeta.route_long_name : null,
+  distance_meters: distanceMeters,
+  stop: {
+    stop_id: nearest.stop_id,
+    stop_name: nearest.stop_name,
+    lat: nearest.lat,
+    lon: nearest.lon
+  },
+  query: {
+    lat,
+    lng
   }
+});
+  } catch (e) {
+  console.error('nearest api error', e);
+  res.status(500).json({ error: 'Failed to compute nearest stop' });
+}
 });
 
 // Route timing + per-stop ETAs for a specific route/direction
@@ -659,8 +660,8 @@ app.get('/api/routes/:route_id/estimate', async (req, res) => {
       if (chosen) {
         inProgress = true;
       } else if (spans.length) {
-        const upcoming = spans.filter(s => s.start_secs > nowSecs).sort((a,b)=>a.start_secs-b.start_secs)[0];
-        chosen = upcoming || spans.sort((a,b)=>a.start_secs-b.start_secs)[0];
+        const upcoming = spans.filter(s => s.start_secs > nowSecs).sort((a, b) => a.start_secs - b.start_secs)[0];
+        chosen = upcoming || spans.sort((a, b) => a.start_secs - b.start_secs)[0];
       }
     }
 
@@ -702,13 +703,13 @@ app.get('/api/routes/:route_id/estimate', async (req, res) => {
               const dLat = toRad(b.lat - a.lat);
               const dLng = toRad(b.lng - a.lng);
               const la1 = toRad(a.lat), la2 = toRad(b.lat);
-              const h = Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)**2;
-              return 2*R*Math.asin(Math.sqrt(h));
+              const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
+              return 2 * R * Math.asin(Math.sqrt(h));
             };
 
             const poly = pts.map(p => ({ lng: p.lng, lat: p.lat }));
             const cum = new Array(poly.length).fill(0);
-            for (let i = 1; i < poly.length; i++) cum[i] = cum[i-1] + haversine(poly[i-1], poly[i]);
+            for (let i = 1; i < poly.length; i++) cum[i] = cum[i - 1] + haversine(poly[i - 1], poly[i]);
             const totalDist = cum[cum.length - 1] || 1;
 
             // Snap stops to nearest polyline vertex distance (simple approximation)
@@ -718,7 +719,7 @@ app.get('/api/routes/:route_id/estimate', async (req, res) => {
               for (let i = 0; i < poly.length; i++) {
                 const dx = poly[i].lng - lng;
                 const dy = poly[i].lat - lat;
-                const d = dx*dx + dy*dy; // fast rough metric is fine for snapping to vertex
+                const d = dx * dx + dy * dy; // fast rough metric is fine for snapping to vertex
                 if (d < best) { best = d; bestIdx = i; }
               }
               return cum[bestIdx];
@@ -728,7 +729,7 @@ app.get('/api/routes/:route_id/estimate', async (req, res) => {
               seq: s.stop_sequence,
               departure_secs: s.departure_secs,
               dist: nearestDistAlong(s.lon, s.lat)
-            })).sort((a,b) => a.seq - b.seq);
+            })).sort((a, b) => a.seq - b.seq);
 
             // Find the surrounding stops around now
             let idx = stopMap.findIndex(s => s.departure_secs >= nowSecs);
@@ -820,7 +821,7 @@ app.post('/login', async (req, res) => {
         error: true
       });
     }
-    
+
     req.session.user = user;
     req.session.save();
     res.redirect('/home');
@@ -888,15 +889,15 @@ app.get('/settings', auth, (req, res) => {
   const message = req.query.msg || null;
   const error = req.query.error === "true";
 
-  res.render('pages/settings', { 
-    userData, 
-    activeTab, 
-    message, 
-    error, 
-    title: "Settings" 
+  res.render('pages/settings', {
+    userData,
+    activeTab,
+    message,
+    error,
+    title: "Settings"
   });
 });
-//test comment
+
 
 app.post('/settings/profile/update', auth, async (req, res) => {
   try {
@@ -956,7 +957,7 @@ app.post('/settings/change-password', auth, async (req, res) => {
 
 
 app.get('/logout', (req, res) => {
-  if(!req.session.user) return res.redirect('/login');
+  if (!req.session.user) return res.redirect('/login');
   req.session.destroy(err => {
     if (err) {
       return res.render('pages/logout', { message: 'Error logging out. Please try again.' });
