@@ -1,7 +1,6 @@
 .env
 node_modules
 package-lock.json
-*.zip
 *.db
 *.sqlite
 init_db.sh
