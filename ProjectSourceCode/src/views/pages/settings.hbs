@@ -6,15 +6,9 @@
 
       <a href="/home" class="tab-btn back-btn">← Back</a>
 
-
       <a href="/settings?tab=profile"
          class="tab-btn {{#if (eq activeTab 'profile')}}active{{/if}}">
         Account
-      </a>
-
-      <a href="/settings?tab=notifications"
-         class="tab-btn {{#if (eq activeTab 'notifications')}}active{{/if}}">
-        Notifications
       </a>
 
       <a href="/settings?tab=help"
@@ -27,62 +21,36 @@
     </div>
   </div>
 
-  <!-- Main Content -->
+
+  <!-- Main Body -->
   <div class="settings-container">
     <div class="settings-card">
 
-      {{!-- ========== ACCOUNT TAB ========== --}}
+
+      {{!-- ====================== ACCOUNT TAB ====================== --}}
       {{#if (eq activeTab "profile")}}
 
       <h3 class="settings-title">Manage Account</h3>
 
-
-
-      <form method="POST" action="/settings/profile/update" class="mb-4">
-
-        <div class="mb-3">
-          <label class="form-label">Username</label>
-          <input 
-            class="form-control bg-light"
-            type="text"
-            value="{{userData.username}}"
-            disabled
-          >
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Full Name</label>
-          <input 
-            type="text"
-            name="name"
-            class="form-control"
-            placeholder="Enter your name"
-            value="{{userData.name}}"
-          >
-        </div>
-
-        <div class="mb-4">
-          <label class="form-label">Email</label>
-          <input 
-            type="email"
-            name="email"
-            class="form-control"
-            placeholder="Enter your email"
-            value="{{userData.email}}"
-          >
-        </div>
-
-        <button type="submit" class="btn btn-dark">
-          Save Changes
-        </button>
-      </form>
+      <!-- Username (non-editable) -->
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input 
+          class="form-control bg-light"
+          type="text"
+          value="{{userData.username}}"
+          disabled
+        >
+      </div>
 
       <div class="section-divider"></div>
+
       {{#if message}}
         <div class="alert {{#if error}}alert-danger{{else}}alert-success{{/if}}">
           {{message}}
         </div>
       {{/if}}
+
       <h5 class="settings-subtitle">Change Password</h5>
 
       <form method="POST" action="/settings/change-password">
@@ -125,55 +93,79 @@
 
       {{/if}}
 
-      {{!-- ========== NOTIFICATIONS TAB ========== --}}
-      {{#if (eq activeTab "notifications")}}
 
-      <h3 class="settings-title">Notifications</h3>
 
-      <form method="POST" action="/settings/notifications/update">
-
-        <div class="toggle-row">
-          <div>
-            <div class="toggle-title">Bus Arrival Alerts</div>
-            <div class="toggle-desc">Get notified when your bus is close</div>
-          </div>
-          <input class="form-check-input" type="checkbox" name="busAlerts">
-        </div>
-
-        <div class="toggle-row">
-          <div>
-            <div class="toggle-title">Delay Notifications</div>
-            <div class="toggle-desc">Be notified of service disruptions</div>
-          </div>
-          <input class="form-check-input" type="checkbox" name="delayAlerts">
-        </div>
-
-        <button type="submit" class="btn btn-dark">
-          Save Notification Settings
-        </button>
-
-      </form>
-
-      {{/if}}
-
-      {{!-- ========== HELP TAB ========== --}}
+      {{!-- ======================= HELP TAB ========================== --}}
       {{#if (eq activeTab "help")}}
 
       <h3 class="settings-title">Help & Support</h3>
 
-      <div class="help-box mb-4">
-        <div>• How do I track a bus?</div>
-        <div>• Why is my bus delayed?</div>
-        <div>• How do notifications work?</div>
-      </div>
+      <div class="faq-container">
 
-      <a href="mailto:support@betterboulderbuses.com" class="btn btn-outline-dark">
-        Contact Support
-      </a>
+        <!-- FAQ ITEM 1 -->
+        <div class="faq-item">
+          <button class="faq-question" type="button">
+            How do I track a bus in real time?
+          </button>
+          <div class="faq-answer">
+            Open the sidebar to view nearby routes.  
+            Tap a route to load its live map view and stop ETAs.  
+            Bus positions update automatically every few seconds.
+          </div>
+        </div>
+
+        <!-- FAQ ITEM 2 -->
+        <div class="faq-item">
+          <button class="faq-question" type="button">
+            Why does the bus sometimes look delayed or stop moving?
+          </button>
+          <div class="faq-answer">
+            RTD's GPS feed can freeze or lag temporarily.  
+            Buses may also pause at scheduled time points.  
+            These pauses can make the bus appear stopped even when it's on time.
+          </div>
+        </div>
+
+        <!-- FAQ ITEM 3 -->
+        <div class="faq-item">
+          <button class="faq-question" type="button">
+            Why can't the app always find my nearest stop?
+          </button>
+          <div class="faq-answer">
+            The app relies on your device's location accuracy.  
+            Weak GPS signal, denied permissions, or being indoors can limit precision.  
+            Enable location access and move near a window when possible.
+          </div>
+        </div>
+
+      </div>
 
       {{/if}}
 
-    </div> <!-- closes settings-card -->
-  </div> <!-- closes settings-container -->
+    </div>
+  </div>
 
-</div> <!-- closes settings-page -->
+</div>
+
+
+<!-- FAQ Dropdown Script -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const questions = document.querySelectorAll(".faq-question");
+
+  questions.forEach(q => {
+    q.addEventListener("click", () => {
+      const answer = q.nextElementSibling;
+
+      // Close all other answers
+      document.querySelectorAll(".faq-answer").forEach(a => {
+        if (a !== answer) a.style.display = "none";
+      });
+
+      // Toggle this answer
+      answer.style.display =
+        answer.style.display === "block" ? "none" : "block";
+    });
+  });
+});
+</script>
