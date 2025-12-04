@@ -6,18 +6,30 @@
   <section class="register-card">
     <h1 class="register-header text-center">Register</h1>
 
+    {{#if message}}
+    <p class="text-center register-feedback" style="color: red; margin-bottom: 15px;">
+    {{message}}
+    </p>
+    {{/if}}
+
     <form action="/register" method="POST" class="register-form" id="registerForm">
+
+      <!-- EMAIL (actually username in DB) -->
       <div class="mb-3">
         <input
           type="text"
           class="form-control"
           id="username"
           name="username"
-          placeholder="Username"
+          placeholder="Email"
           required
         />
       </div>
 
+      <!-- EMAIL FEEDBACK -->
+      <p class="text-center register-feedback" id="emailFeedback"></p>
+
+      <!-- PASSWORD -->
       <div class="mb-3">
         <input
           type="password"
@@ -29,6 +41,8 @@
         />
       </div>
 
+      <!-- PASSWORD REQUIREMENTS -->
+      <!-- CONFIRM PASSWORD -->
       <div class="mb-4">
         <input
           type="password"
@@ -40,14 +54,17 @@
         />
       </div>
 
-      <button type="submit" class="register-submit" id="registerSubmit" disabled>Register</button>
+      <!-- PASSWORD FEEDBACK (strength + mismatch) -->
+      <p class="text-center register-feedback" id="passwordFeedback"></p>
+
+      <button type="submit" class="register-submit" id="registerSubmit" disabled>
+        Register
+      </button>
     </form>
 
     <p class="register-to-login text-center">
       Already have an account? <a href="/login">Login</a>
     </p>
-
-    <p class="text-center register-feedback" id="passwordFeedback"></p>
 
   </section>
 </main>
