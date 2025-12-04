@@ -857,8 +857,19 @@ app.post('/register', async (req, res) => {
     //res.status(200).json({ message: 'Success' });
     res.redirect('/login');
   } catch (error) {
+    if (error.code === '23505') {
+      // Duplicate username
+      return res.render('pages/register', {
+        message: "An account with this email already exists.",
+        error: true
+      });
+    }
+  
     console.error("Error registering user:", error);
-    res.status(400).json({ message: 'Invalid input' });
+    return res.render('pages/register', {
+      message: "Registration failed. Please try again.",
+      error: true
+    });
   }
 });
 
