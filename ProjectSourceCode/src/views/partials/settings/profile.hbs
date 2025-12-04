@@ -1,36 +1,39 @@
 <div class="mb-4">
-  <h2 class="h4 mb-4">Profile Settings</h2>
+  <h2 class="h4 mb-4">Change Password</h2>
 
-  <!-- Profile Image -->
-  <div class="d-flex align-items-center mb-4">
-    <img src="{{userData.avatar}}" 
-         onerror="this.src='/img/default-profile-photo.jpg'" 
-         alt="Profile" 
-         class="rounded-circle me-3" 
-         style="width: 100px; height: 100px; object-fit: cover;">
-    <button class="btn btn-outline-secondary">Change Photo</button>
-  </div>
-
-  <!-- Profile Form -->
-  <form>
+  <form method="POST" action="/settings/password/update">
     <div class="row g-3">
-      <!-- Name -->
+
+      <!-- Current Password -->
       <div class="col-md-6">
-        <label for="name" class="form-label">Name</label>
-        <input type="text" class="form-control" id="name" name="name" 
-               value="{{userData.name}}" placeholder="Enter your name">
+        <label for="currentPassword" class="form-label">Current Password</label>
+        <input 
+          type="password" 
+          class="form-control" 
+          id="currentPassword" 
+          name="currentPassword" 
+          placeholder="Enter current password" 
+          required
+        >
       </div>
 
-      <!-- Email -->
+      <!-- New Password -->
       <div class="col-md-6">
-        <label for="email" class="form-label">Email</label>
-        <input type="email" class="form-control" id="email" name="email" 
-               value="{{userData.email}}" placeholder="Enter your email">
+        <label for="newPassword" class="form-label">New Password</label>
+        <input 
+          type="password" 
+          class="form-control" 
+          id="newPassword" 
+          name="newPassword" 
+          placeholder="Enter new password" 
+          required
+        >
       </div>
+    </div>
 
     <!-- Save Button -->
     <div class="mt-4">
-      <button type="submit" class="btn btn-primary">Save Changes</button>
+      <button type="submit" class="btn btn-primary w-100">Update Password</button>
     </div>
   </form>
 </div>
