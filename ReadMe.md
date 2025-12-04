@@ -26,7 +26,9 @@ Reed Shisler
 ---
 
 ## Prerequisites
-Not implemented.
+For Local users: Install Docker, Node, SQL, and npm (to install dependencies).
+
+For Non-local users: No prerequisites.
 
 ---
 
