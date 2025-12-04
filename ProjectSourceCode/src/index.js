@@ -351,7 +351,7 @@ app.get('/api/nearest', async (req, res) => {
 `, [routeId]);
 
     const routeMeta = routeRows[0] || null;
-    );
+
 
 // Compute approximate distance in meters using a simple haversine
 const toRad = (x) => x * Math.PI / 180;
