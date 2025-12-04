@@ -9,7 +9,7 @@
 }
 
 /* --------------------------------------------------------------
-   SIDEBAR WRAPPER + HAPTIC EASING
+   SIDEBAR WRAPPER
 -------------------------------------------------------------- */
 
 .sidebar {
@@ -20,6 +20,8 @@
   position: fixed;
   left: 0;
   top: 0;
+  display: flex;
+  flex-direction: column;
 
   transform: translateX(0);
   transition: transform 0.55s var(--ease-haptic);
@@ -74,47 +76,37 @@
 }
 
 /* --------------------------------------------------------------
-   SCROLL PANE + PAGED ROUTE LIST
+   FIXED SCROLL LAYOUT (restores original behavior)
 -------------------------------------------------------------- */
 
 .sidebar-scroll-container {
-  height: calc(100vh - 140px);   /* same as before — keeps search bar in place */
-  overflow-y: auto;
+  height: calc(100% - 150px); /* adjust if needed */
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch; /* iOS momentum */
+  overscroll-behavior: none;         /* rubber-band returns */
+  transform: translateZ(0);          /* hardware acceleration */
   padding: 0.75rem 1.25rem 1rem;
-
-  /* Page snapping */
-  /*scroll-snap-type: y mandatory; */
-  scroll-snap-stop: always;        /* force stopping exactly on pages */
-  overscroll-behavior-y: contain;  /* prevents fast scroll skipping pages */
-  scroll-behavior: smooth;
-  touch-action: pan-y;        /* prevents multi-page momentum */
-
+  box-sizing: border-box;
 }
 
 
-/* Each page = 4 cards */
+/* --------------------------------------------------------------
+   PAGE WRAPPER — NEUTRALIZED (no more snapping)
+-------------------------------------------------------------- */
+
 .route-page {
-  /*scroll-snap-align: start;*/
-  height: calc(100vh - 160px); /* smaller so it fits ABOVE search bar */
-  display: grid;
-  grid-template-rows: repeat(4, 1fr); /* 4 equal slots */
-  gap: 12px;
-  padding: 10px 0 20px;
+  display: block;
+  height: auto;
+  padding: 0;
+  margin: 0;
 }
 
-
-
-@keyframes pageSlideUp {
-  0% { 
-    transform: translateY(24px); 
-    opacity: 0;
-  }
-  100% { 
-    transform: translateY(0); 
-    opacity: 1;
-  }
+.sidebar-inner {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  transform: translateZ(0); /* forces GPU layer */
 }
-
 /* --------------------------------------------------------------
    APPLE-STYLE ROUTE CARDS
 -------------------------------------------------------------- */
@@ -138,9 +130,9 @@
   gap: 10px;
 
   transition: transform 0.2s var(--ease-soft), box-shadow 0.2s var(--ease-soft);
+  margin-bottom: 18px;
 }
 
-/* Micro interaction */
 .route-card:hover {
   transform: translateY(-3px);
   box-shadow:
@@ -172,7 +164,7 @@
 }
 
 /* --------------------------------------------------------------
-   GLASS PILL BUTTON (Closest Stop)
+   PILLS
 -------------------------------------------------------------- */
 
 .route-pill-btn {
@@ -198,13 +190,63 @@
 }
 
 /* --------------------------------------------------------------
-   LIQUID GLASS SEARCH BUBBLE (Bottom 20%)
+   ROUTE DETAILS PANEL (closest stop + ETA list)
+-------------------------------------------------------------- */
+
+.route-details {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 18px;
+  padding: 12px 16px;
+  margin-top: 12px;
+
+  background: rgba(20,20,20,0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: white;
+}
+
+/* --------------------------------------------------------------
+   FIXED HORIZONTAL SCROLL FOR STOP ETA CARDS
+-------------------------------------------------------------- */
+
+.stops-scroll-container {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  gap: 12px;
+  padding: 4px 0;
+  margin-bottom: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.stop-card {
+  min-width: 145px;
+  flex-shrink: 0;
+  padding: 10px;
+  background: #333;
+  color: #fff;
+  border-radius: 10px;
+}
+
+.stop-card-past {
+  opacity: 0.5;
+}
+
+.stop-card-nearest {
+  border: 2px solid #cfb87c;
+}
+
+/* --------------------------------------------------------------
+   SEARCH BAR (bottom glass bubble)
 -------------------------------------------------------------- */
 
 .sidebar-search-container {
   position: sticky;
   bottom: 0;
   padding: 12px 18px 20px;
+  z-index: 10;
 
   background: linear-gradient(
     to top,
@@ -232,7 +274,6 @@
     inset 0 0 0 1px rgba(255,255,255,0.06);
 }
 
-/* Remove emoji */
 .sidebar-search-shell::before {
   content: "";
   width: 18px;
@@ -244,7 +285,6 @@
     0 2px 5px rgba(0, 0, 0, 0.45);
   opacity: 0.9;
 }
-
 
 #routeSearch {
   flex: 1;
