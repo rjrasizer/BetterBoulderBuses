@@ -1,8 +1,5 @@
 # Better Boulder Buses
 
-## Access Aplication HERE (Lab 12 credit):
-https://betterboulderbuses.onrender.com/home
-
 ## Application Description
 Better Boulder Buses is a free, Boulder-based public transportation website that allows users to view bus routes, live locations of buses, all Colorado RTD bus schedules, closest bus stops and routes, and user live location services. Our application includes both a user-friendly computer and mobile interface that provides a clean, functional user experience. We also have an interactive map that updates available routes nearby for users based on their location.
 
